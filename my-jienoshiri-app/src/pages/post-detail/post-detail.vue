@@ -1,6 +1,6 @@
 <template>
   <view class="page-container">
-    
+
     <scroll-view scroll-y class="scroll-area">
       <swiper class="media-swiper" :indicator-dots="mediaList.length > 1" :autoplay="false" circular>
         <swiper-item v-for="(url, index) in mediaList" :key="index">
@@ -32,15 +32,18 @@
         <view class="comment-item" v-for="(c, i) in commentList" :key="i">
           <image class="c-avatar" :src="c.avatar || '/static/logo.png'"></image>
           <view class="c-body">
-            <text class="c-name">{{ c.nickname }}</text>
-            <view class="c-content-row">
-              <text class="c-text">{{ c.content }}</text>
-              <text v-if="c.score > 0" class="c-score"> {{ c.score }}分</text>
+            <view class="c-header">
+              <text class="c-name">{{ c.nickname }}</text>
+              <text class="c-badge" v-if="c.reputation >= 100">
+                {{ getBadgeIcon(c.reputation) }}
+              </text>
+              <text class="c-identity" :class="c.identityType">{{ c.identityType === 'student' ? '留学生' : '用户' }}</text>
             </view>
+            <text class="c-text">{{ c.content }}</text>
           </view>
         </view>
       </view>
-      
+
       <view style="height: 120px;"></view>
     </scroll-view>
 
@@ -48,31 +51,21 @@
       <view class="star-row">
         <text class="star-label">打分：</text>
         <view class="star-box">
-          <text 
-            v-for="i in 5" 
-            :key="i" 
-            class="star-icon" 
-            :class="{ active: i <= rating }" 
-            @click="setRating(i)"
-          >★</text>
+          <text v-for="i in 5" :key="i" class="star-icon" :class="{ active: i <= rating }"
+            @click="setRating(i)">★</text>
         </view>
         <text class="score-text" v-if="rating > 0">{{ rating }}.0 分</text>
         <text class="score-text" v-else>未打分</text>
       </view>
 
       <view class="input-row">
-        <input 
-          class="comment-input" 
-          v-model="newComment" 
-          placeholder="写下你的评价..." 
-          confirm-type="send" 
-          @confirm="sendComment" 
-        />
-        
+        <input class="comment-input" v-model="newComment" placeholder="写下你的评价..." confirm-type="send"
+          @confirm="sendComment" />
+
         <view class="send-btn" @click="sendComment">发布</view>
-        
+
         <view class="action-icons" @click="handleLike" style="margin-left: 10px;">
-          <text :style="{color: post.isLiked ? '#ff2442' : '#333'}">
+          <text :style="{ color: post.isLiked ? '#ff2442' : '#333' }">
             ❤️ {{ post.likeCount || 0 }}
           </text>
         </view>
@@ -140,15 +133,15 @@ const sendComment = () => {
   }
 
   const token = uni.getStorageSync('token');
-  
+
   uni.request({
     url: 'http://localhost:8080/post/comment',
     method: 'POST',
     header: { 'Authorization': token },
-    data: { 
-        postId: post.value.id, 
-        content: newComment.value || '', // 没写字就传空字符串
-        score: rating.value 
+    data: {
+      postId: post.value.id,
+      content: newComment.value || '', // 没写字就传空字符串
+      score: rating.value
     },
     success: () => {
       newComment.value = '';
@@ -173,45 +166,160 @@ const setRating = (val) => {
   flex-direction: column;
   height: 100vh;
   background-color: #fff;
-  overflow: hidden; /* 防止整个页面出现双重滚动条 */
+  overflow: hidden;
+  /* 防止整个页面出现双重滚动条 */
 }
 
 /* 中间滚动区：自动占据剩余高度 */
 .scroll-area {
   flex: 1;
-  height: 0; /* 配合 flex:1 使用，防止撑破 */
+  height: 0;
+  /* 配合 flex:1 使用，防止撑破 */
   width: 100%;
 }
 
 /* 轮播图 */
-.media-swiper { width: 100%; height: 750rpx; background: #000; }
-.media-item { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.full-media { width: 100%; height: 100%; }
+.media-swiper {
+  width: 100%;
+  height: 750rpx;
+  background: #000;
+}
+
+.media-item {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.full-media {
+  width: 100%;
+  height: 100%;
+}
 
 /* 作者栏 */
-.author-bar { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f5f5f5; }
-.mini-avatar { width: 35px; height: 35px; border-radius: 50%; margin-right: 10px; }
-.author-text { flex: 1; display: flex; flex-direction: column; }
-.nickname { font-size: 14px; font-weight: bold; }
-.identity { font-size: 11px; color: #999; }
-.follow-btn { font-size: 12px; background: #ff2442; color: #fff; border-radius: 20px; padding: 0 15px; height: 28px; line-height: 28px; }
+.author-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.mini-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.author-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.identity {
+  font-size: 11px;
+  color: #999;
+}
+
+.follow-btn {
+  font-size: 12px;
+  background: #ff2442;
+  color: #fff;
+  border-radius: 20px;
+  padding: 0 15px;
+  height: 28px;
+  line-height: 28px;
+}
 
 /* 正文 */
-.main-content { padding: 15px; }
-.title { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: block; }
-.text-body { font-size: 15px; color: #333; line-height: 1.6; }
-.date { font-size: 12px; color: #ccc; margin-top: 15px; display: block; }
-.location-tag { margin-top: 10px; font-size: 12px; color: #007aff; background: #f0f7ff; width: fit-content; padding: 2px 8px; border-radius: 4px; }
+.main-content {
+  padding: 15px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.text-body {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.date {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 15px;
+  display: block;
+}
+
+.location-tag {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #007aff;
+  background: #f0f7ff;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
 
 /* 评论区 */
-.comment-section { padding: 15px; border-top: 10px solid #f5f5f5; }
-.section-title { font-size: 14px; font-weight: bold; margin-bottom: 15px; }
-.comment-item { display: flex; margin-bottom: 15px; }
-.c-avatar { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
-.c-body { flex: 1; display: flex; flex-direction: column; }
-.c-name { font-size: 12px; color: #999; margin-bottom: 4px; }
-.c-text { font-size: 14px; color: #333; }
-.c-score { font-size: 12px; color: #ffca3e; margin-left: 5px; }
+.comment-section {
+  padding: 15px;
+  border-top: 10px solid #f5f5f5;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.comment-item {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.c-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.c-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.c-name {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.c-text {
+  font-size: 14px;
+  color: #333;
+}
+
+.c-score {
+  font-size: 12px;
+  color: #ffca3e;
+  margin-left: 5px;
+}
 
 /* ⭐ 底部区域：不再使用 fixed，而是作为 Flex 的一部分 */
 .bottom-fixed-area {
@@ -219,39 +327,64 @@ const setRating = (val) => {
   border-top: 1px solid #eee;
   padding: 10px 15px;
   /* 适配 iPhone 底部黑条，如果不生效可以加 padding-bottom: constant(safe-area-inset-bottom); */
-  padding-bottom: 30px; 
+  padding-bottom: 30px;
   display: flex;
   flex-direction: column;
   z-index: 100;
 }
 
 /* 星星行 */
-.star-row { display: flex; align-items: center; margin-bottom: 10px; }
-.star-label { font-size: 14px; color: #666; margin-right: 10px; }
-.star-icon { font-size: 24px; color: #e0e0e0; margin-right: 8px; }
-.star-icon.active { color: #ffca3e; }
-.score-text { font-size: 14px; color: #ffca3e; font-weight: bold; margin-left: 10px; }
+.star-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.star-label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 10px;
+}
+
+.star-icon {
+  font-size: 24px;
+  color: #e0e0e0;
+  margin-right: 8px;
+}
+
+.star-icon.active {
+  color: #ffca3e;
+}
+
+.score-text {
+  font-size: 14px;
+  color: #ffca3e;
+  font-weight: bold;
+  margin-left: 10px;
+}
 
 /* 输入行调整 */
-.input-row { 
-  display: flex; 
-  align-items: center; 
+.input-row {
+  display: flex;
+  align-items: center;
   width: 100%;
 }
 
-.comment-input { 
-  flex: 1; 
-  background: #f5f5f5; 
-  height: 36px; 
-  border-radius: 18px; 
-  padding: 0 15px; 
-  font-size: 14px; 
-  margin-right: 10px; /* 稍微缩小间距 */
+.comment-input {
+  flex: 1;
+  background: #f5f5f5;
+  height: 36px;
+  border-radius: 18px;
+  padding: 0 15px;
+  font-size: 14px;
+  margin-right: 10px;
+  /* 稍微缩小间距 */
 }
 
 /* ⭐ 新增按钮样式 */
 .send-btn {
-  background-color: #007aff; /* 蓝色按钮 */
+  background-color: #007aff;
+  /* 蓝色按钮 */
   color: #fff;
   font-size: 14px;
   padding: 6px 15px;
@@ -260,13 +393,19 @@ const setRating = (val) => {
   /* 增加点击效果 */
   transition: opacity 0.2s;
 }
+
 .send-btn:active {
   opacity: 0.8;
 }
 
-.action-icons { 
-  font-size: 16px; 
+.action-icons {
+  font-size: 16px;
   display: flex;
   align-items: center;
 }
+
+.c-header { display: flex; align-items: center; margin-bottom: 4px; }
+.c-badge { font-size: 10px; margin-left: 5px; margin-right: 5px; }
+.c-identity { font-size: 10px; padding: 1px 4px; border-radius: 4px; background: #f0f0f0; color: #999; }
+.c-identity.student { background: #e3f2fd; color: #007aff; }
 </style>

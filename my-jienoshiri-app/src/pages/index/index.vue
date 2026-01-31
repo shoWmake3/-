@@ -29,7 +29,13 @@
             <div class="card-footer">
               <div class="author-box">
                 <image class="mini-avatar" :src="item.authorAvatar || '/static/logo.png'" mode="aspectFill"></image>
-                <text class="mini-name">{{ item.authorName }}</text>
+
+                <div class="name-col">
+                  <text class="mini-name">{{ item.authorName }}</text>
+                  <text class="badge-tag" v-if="item.authorReputation >= 100">
+                    {{ getBadgeIcon(item.authorReputation) }} 信誉{{ item.authorReputation }}
+                  </text>
+                </div>
               </div>
               <div class="like-box" @click.stop="handleLike(item)">
                 <text :class="{ 'liked': item.isLiked }">❤️</text>
@@ -236,6 +242,15 @@ const getThumbnail = (item) => {
 const handleImgError = (e) => {
   console.error("图片加载失败", e);
 };
+
+// ⭐ 辅助函数：根据声望计算勋章
+const getBadgeIcon = (score) => {
+  score = score || 0;
+  if (score < 0) return '⚠️'; // 需警惕
+  if (score < 100) return '';  // 萌新不显示或显示 🌱
+  if (score < 300) return '🎓'; // 认证学长
+  return '👑'; // 社区之星
+};
 </script>
 
 <style>
@@ -332,14 +347,15 @@ const handleImgError = (e) => {
   width: 100%;
   display: block;
   /* 必须设置，否则没加载出来前高度为0 */
-  min-height: 180px; 
-  background: #333; 
+  min-height: 180px;
+  background: #333;
 }
 
 .card-cover-wrapper {
   position: relative;
   width: 100%;
-  background-color: #f0f0f0; /* 加载前的占位色 */
+  background-color: #f0f0f0;
+  /* 加载前的占位色 */
   overflow: hidden;
 }
 
@@ -436,15 +452,19 @@ const handleImgError = (e) => {
     margin-bottom: 20px;
   }
 }
+
 .video-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
   z-index: 2;
 }
+
+.name-col { display: flex; flex-direction: column; justify-content: center; }
+.badge-tag { font-size: 9px; color: #fbc02d; background: #fff9c4; padding: 1px 4px; border-radius: 4px; margin-top: 2px; width: fit-content; }
 </style>

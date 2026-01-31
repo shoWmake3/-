@@ -96,6 +96,8 @@ public class PostService {
                 vo.setAuthorName(author.getNickname());
                 vo.setAuthorAvatar(author.getAvatar());
                 vo.setAuthorIdentity(author.getIdentityType());
+                // ⭐ 新增：将作者的声望值传给前端 (需要在 PostVo 中添加字段)
+                vo.setAuthorReputation(author.getReputation());
             }
             // 填充距离
             if (userLat != null && post.getLatitude() != null) {
@@ -119,30 +121,33 @@ public class PostService {
             }
 
             // 权重 2: Content-Based (身份匹配) -> +500分
-            // 只有当没有 UserCF 推荐时，才凸显这个
             if (contentBasedIds.contains(post.getId())) {
                 score += 500;
-
-                // ⭐ 修复 BUG：
-                // 之前的代码：if (!vo.getTitle().startsWith("【"))
-                // 现在的代码：只要没有被"猜你喜欢"标记过，就加上"精选"。
-                // 这样即使标题原本是 "【隐藏】xxx"，也能变成 "【精选】【隐藏】xxx"
                 if (!vo.getTitle().startsWith("【猜你喜欢】")) {
                     vo.setTitle("【精选】" + vo.getTitle());
                 }
             }
 
-            // 权重 3: LBS (离得近) -> +300分
+            // ⭐ 权重 3: 作者声望加权 (High Reputation Bonus)
+            // 逻辑：每 1 点声望增加 0.5 分，最高加 200 分
+            // 让“认证学长”或“高信誉中介”的帖子更容易被看到
+            if (author != null && author.getReputation() != null) {
+                double repBonus = author.getReputation() * 0.5;
+                // 限制最大加分，防止刷分霸屏
+                score += Math.min(Math.max(repBonus, -500), 200);
+            }
+
+            // 权重 4: LBS (离得近) -> +300分
             if (vo.getDistance() != null && vo.getDistance() < 10) {
                 score += 300;
             }
 
-            // 权重 4: Wiki 百科 -> +200分
+            // 权重 5: Wiki 百科 -> +200分
             if (post.getStatus() == 3) {
                 score += 200;
             }
 
-            // 权重 5: 时间分
+            // 权重 6: 时间分
             score += (double) post.getId() / 1000000.0;
 
             vo.setScore(score);
@@ -172,9 +177,6 @@ public class PostService {
             post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
             postMapper.updateById(post);
 
-            // (可选) 取消点赞是否要扣分？通常不扣，或者扣 -1
-            // changeReputation(post.getUserId(), -1, "取消点赞");
-
             return false;
         } else {
             // --- 点赞逻辑 ---
@@ -184,8 +186,7 @@ public class PostService {
             like.setCreateTime(LocalDateTime.now());
             postLikeMapper.insert(like);
 
-            // ⭐ 核心修改：给帖子作者加分 (+1分)
-            // 注意：是给 post.getUserId() (作者) 加分，不是给 userId (点赞人) 加分
+            // ⭐ 给帖子作者加分 (+1分)
             changeReputation(post.getUserId(), 1, "帖子被点赞");
 
             // 更新帖子点赞数
@@ -202,9 +203,13 @@ public class PostService {
         // 1. 获取评价人 (用于计算权重)
         SysUser user = userMapper.selectById(comment.getUserId());
 
-        // 计算评价人的权重快照 (1.0 基准 + 声望加成)
+        // ⭐ 计算评价人的权重快照 (1.0 基准 + 声望加成)
+        // 逻辑：声望 100 的人，权重是 1.5；声望 0 的人，权重是 1.0
         double currentReputation = (user.getReputation() == null) ? 0 : user.getReputation();
         double weight = 1.0 + (currentReputation / 100.0) * 0.5;
+
+        // 限制权重上限为 3.0，防止失衡
+        weight = Math.min(weight, 3.0);
         comment.setWeightSnapshot(weight);
 
         // 2. 处理评分 (空值默认为0)
@@ -222,18 +227,14 @@ public class PostService {
             post.setCommentCount(post.getCommentCount() + 1);
             postMapper.updateById(post);
 
-            // ⭐⭐ 核心修改：如果被打高分，奖励帖子作者 ⭐⭐
-            // 逻辑：如果评分 >= 4.0，作者声望 +3
+            // ⭐ 如果被打高分 (>= 4.0)，奖励帖子作者 +3 分
             if (comment.getScore() >= 4.0) {
-                // 注意：这里是给 post.getUserId() (作者) 加分
                 changeReputation(post.getUserId(), 3, "获得高分评价");
             }
         }
 
-        // (可选) 给评价人自己也加点辛苦分 (+1)
-        // ⭐⭐ 核心新增：给发评论的人 +2 分 ⭐⭐
+        // 5. 给发评论的人自己 +2 分
         changeReputation(comment.getUserId(), 2, "发布评论奖励");
-        // changeReputation(user.getId(), 1, "发布评价");
     }
 
     public List<CommentVo> getComments(Long postId) {
@@ -245,11 +246,14 @@ public class PostService {
         for (Comment c : comments) {
             CommentVo vo = new CommentVo();
             BeanUtils.copyProperties(c, vo);
+
             SysUser user = userMapper.selectById(c.getUserId());
             if (user != null) {
                 vo.setNickname(user.getNickname());
                 vo.setAvatar(user.getAvatar());
                 vo.setIdentityType(user.getIdentityType());
+                // ⭐ 新增：将评论人的声望值传给前端 (需要在 CommentVo 中添加字段)
+                vo.setReputation(user.getReputation());
             }
             result.add(vo);
         }
@@ -274,5 +278,4 @@ public class PostService {
             System.out.println("【声望变动】用户 " + user.getNickname() + " " + reason + " -> " + user.getReputation());
         }
     }
-
 }

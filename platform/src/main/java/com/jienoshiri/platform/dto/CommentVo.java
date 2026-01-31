@@ -11,4 +11,5 @@ public class CommentVo extends Comment {
     private String nickname;
     private String avatar;
     private String identityType;
+    private Integer reputation;
 }
