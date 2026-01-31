@@ -35,6 +35,19 @@
 			"style": {
 				"navigationBarTitleText": "帖子详情"
 			}
+		},
+		{
+			"path": "pages/message/message",
+			"style": {
+				"navigationBarTitleText": "消息",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "聊天"
+			}
 		}
 	],
 	"globalStyle": {
@@ -60,6 +73,12 @@
 				"text": "我的",
 				"iconPath": "static/logo.png",
 				"selectedIconPath": "static/logo.png"
+			},
+			{
+				"pagePath": "pages/message/message",
+				"iconPath": "static/logo.png",
+				"selectedIconPath": "static/logo.png",
+				"text": "消息"
 			}
 		]
 	}
