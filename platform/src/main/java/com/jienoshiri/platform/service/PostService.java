@@ -39,6 +39,9 @@ public class PostService {
     @Autowired
     private RecommendationService recommendationService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     /**
      * 发布帖子
      */
@@ -201,18 +204,30 @@ public class PostService {
             // 更新帖子点赞数
             post.setLikeCount(post.getLikeCount() + 1);
             postMapper.updateById(post);
+            // ⭐ 触发通知：有人点赞了
+            // 只有当点赞人不是作者自己时才通知
+            if (!post.getUserId().equals(userId)) {
+                String likerName = (liker != null) ? liker.getNickname() : "有人";
+                notificationService.send(
+                        post.getUserId(),
+                        "收到新点赞",
+                        likerName + " 赞了你的帖子",
+                        1,
+                        postId
+                );
+            }
             return true;
         }
     }
 
     /**
-     * 发表评论 / 评分
+     * 发表评论 / 评分 (完整版：含声望权重 + 系统通知)
      */
     public void addComment(Comment comment) {
         // 1. 获取评价人 (用于计算权重)
         SysUser user = userMapper.selectById(comment.getUserId());
 
-        // ⭐ 计算评价人的权重快照 (1.0 基准 + 声望加成)
+        // 计算评价人的权重快照 (1.0 基准 + 声望加成)
         // 逻辑：声望 100 的人，权重是 1.5；声望 0 的人，权重是 1.0
         double currentReputation = (user.getReputation() == null) ? 0 : user.getReputation();
         double weight = 1.0 + (currentReputation / 100.0) * 0.5;
@@ -230,15 +245,31 @@ public class PostService {
         comment.setCreateTime(LocalDateTime.now());
         commentMapper.insert(comment);
 
-        // 4. 更新帖子的评论数
+        // 4. 更新帖子数据 & 触发通知
         Post post = postMapper.selectById(comment.getPostId());
         if (post != null) {
+            // 更新评论数
             post.setCommentCount(post.getCommentCount() + 1);
             postMapper.updateById(post);
 
-            // ⭐ 如果被打高分 (>= 4.0)，奖励帖子作者 +3 分
+            // 奖励作者声望 (如果被打高分 >= 4.0)
             if (comment.getScore() >= 4.0) {
                 changeReputation(post.getUserId(), 3, "获得高分评价");
+            }
+
+            // ⭐⭐ 新增：触发系统通知 (如果评论人不是作者自己) ⭐⭐
+            if (!post.getUserId().equals(comment.getUserId())) {
+                String commenterName = (user != null) ? user.getNickname() : "有人";
+
+                // 调用 NotificationService 发送通知
+                // 参数：接收人ID, 标题, 内容, 类型(2=评论), 关联ID(帖子ID)
+                notificationService.send(
+                        post.getUserId(),
+                        "收到新评论",
+                        commenterName + " 评论了你：" + comment.getContent(),
+                        2,
+                        post.getId()
+                );
             }
         }
 

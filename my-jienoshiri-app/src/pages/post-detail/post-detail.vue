@@ -12,13 +12,15 @@
       </swiper>
 
       <view class="author-bar">
-        <image class="mini-avatar" :src="post.authorAvatar || '/static/logo.png'" mode="aspectFill"></image>
+        <image class="mini-avatar" :src="post.authorAvatar || '/static/logo.png'" mode="aspectFill"
+          @click.stop="goToChat(post.userId, post.authorName)"></image>
+          
         <view class="author-text">
           <text class="nickname">{{ post.authorName }}</text>
           <view class="identity-row">
             <text class="identity">{{ getIdentityName(post.authorIdentity) }}</text>
             <text class="badge-tag" v-if="post.authorReputation !== undefined">
-               {{ getBadgeIcon(post.authorReputation) }} 信誉{{ post.authorReputation }}
+               {{ getBadgeIcon(post.authorReputation) }} {{ getBadgeName(post.authorReputation) }} {{ post.authorReputation }}
             </text>
           </view>
         </view>
@@ -42,12 +44,15 @@
       <view class="comment-section">
         <view class="section-title">共 {{ commentList.length }} 条评论</view>
         <view class="comment-item" v-for="(c, i) in commentList" :key="i">
-          <image class="c-avatar" :src="c.avatar || '/static/logo.png'"></image>
+          
+          <image class="c-avatar" :src="c.avatar || '/static/logo.png'" 
+            @click.stop="goToChat(c.userId, c.nickname)"></image>
+            
           <view class="c-body">
             <view class="c-header">
               <text class="c-name">{{ c.nickname }}</text>
               <text class="c-badge" v-if="c.reputation !== undefined">
-                 {{ getBadgeIcon(c.reputation) }}
+                 {{ getBadgeIcon(c.reputation) }} {{ getBadgeName(c.reputation) }}
               </text>
               <text class="c-identity" :class="c.identityType">{{ getIdentityName(c.identityType) }}</text>
             </view>
@@ -115,7 +120,37 @@ onLoad((options) => {
   }
 });
 
-// 称号取得
+// ⭐ 新增：跳转私信方法
+const goToChat = (targetId, targetName, avatarUrl) => {
+  const token = uni.getStorageSync('token');
+  if (!token) {
+    uni.navigateTo({ url: '/pages/login/login' });
+    return;
+  }
+  
+  // 防止自己跟自己聊天
+  const me = uni.getStorageSync('user');
+  if (me && me.id == targetId) {
+    uni.showToast({ title: '不能给自己发私信哦', icon: 'none' });
+    return;
+  }
+
+  // 对头像URL进行编码，防止特殊字符导致解析错误
+  const safeAvatar = encodeURIComponent(avatarUrl || '');
+  
+  uni.navigateTo({
+    url: `/pages/chat/chat?targetId=${targetId}&name=${targetName || '用户'}&avatar=${safeAvatar}`
+  });
+};
+
+const getBadgeName = (score) => {
+  score = score || 0;
+  if (score < 0) return '需警惕';
+  if (score < 100) return '萌新';
+  if (score < 300) return '认证学长';
+  return '社区之星';
+};
+
 const getBadgeIcon = (score) => {
   score = score || 0;
   if (score < 0) return '⚠️';
@@ -173,12 +208,10 @@ const sendComment = () => {
   });
 };
 
-// ⭐ 修正: 本物の「いいね」APIを呼び出す
 const handleLike = () => {
     const token = uni.getStorageSync('token');
     if (!token) return uni.showToast({ title: '请先登录', icon: 'none' });
 
-    // 先に画面上の数字を変えておく（サクサク感のため）
     const isLike = !post.value.isLiked;
     post.value.isLiked = isLike;
     post.value.likeCount = (post.value.likeCount || 0) + (isLike ? 1 : -1);
@@ -188,7 +221,6 @@ const handleLike = () => {
       method: 'POST',
       header: { 'Authorization': token },
       success: (res) => {
-        // エラーなら元に戻すなどの処理が必要ですが、ここでは簡易的に
         if (res.statusCode !== 200) {
            post.value.isLiked = !isLike;
            post.value.likeCount += (isLike ? -1 : 1);
@@ -221,13 +253,10 @@ const setRating = (val) => { rating.value = val; };
 .main-content { padding: 15px; }
 .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: block; }
 .text-body { font-size: 15px; color: #333; line-height: 1.6; }
-
-/* ⭐ 記事内部のメタ情報行 */
 .post-meta-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
 .date { font-size: 12px; color: #ccc; }
 .inner-like-btn { background: #f5f5f5; padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #666; transition: all 0.2s; }
 .inner-like-btn.active { background: #ffebeb; color: #ff2442; }
-
 .location-tag { margin-top: 10px; font-size: 12px; color: #007aff; background: #f0f7ff; width: fit-content; padding: 2px 8px; border-radius: 4px; }
 
 .comment-section { padding: 15px; border-top: 10px solid #f5f5f5; }
@@ -254,8 +283,6 @@ const setRating = (val) => { rating.value = val; };
 .c-badge { font-size: 10px; color: #fbc02d; background: #fff9c4; padding: 1px 4px; border-radius: 4px; margin-left: 5px; margin-right: 5px; }
 .c-identity { font-size: 10px; padding: 1px 4px; border-radius: 4px; background: #f0f0f0; color: #999; }
 .c-identity.student { background: #e3f2fd; color: #007aff; }
-
-/* ⭐ コメントの星表示 */
 .c-star-row { display: flex; align-items: center; margin-bottom: 4px; }
 .c-stars { color: #ffca3e; font-size: 12px; letter-spacing: 1px; }
 .c-score-num { font-size: 11px; color: #999; margin-left: 5px; }
