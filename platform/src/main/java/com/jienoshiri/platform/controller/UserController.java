@@ -41,4 +41,17 @@ public class UserController {
         userMapper.updateById(currentUser);
         return "更新成功";
     }
+
+    /**
+     * ⭐ 新增：获取当前用户详细信息 (用于个人中心)
+     */
+    @GetMapping("/info")
+    public SysUser getUserInfo(@RequestHeader("Authorization") String token) {
+        String username = jwtUtil.getUsername(token);
+        // 查询用户，注意：生产环境建议用 VO 过滤掉 password 等敏感字段，这里毕设演示直接传
+        SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
+        // 密码脱敏
+        user.setPassword(null);
+        return user;
+    }
 }

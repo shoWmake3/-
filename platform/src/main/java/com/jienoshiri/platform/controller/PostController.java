@@ -5,14 +5,17 @@ import com.jienoshiri.platform.dto.PostVo;
 import com.jienoshiri.platform.entity.Comment;
 import com.jienoshiri.platform.entity.Post;
 import com.jienoshiri.platform.entity.SysUser;
+import com.jienoshiri.platform.mapper.PostMapper;
 import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.service.PostService;
 import com.jienoshiri.platform.utils.JwtUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,6 +30,9 @@ public class PostController {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private PostMapper postMapper;
 
 
     // 获取首页帖子列表
@@ -114,5 +120,33 @@ public class PostController {
     public String increaseView(@PathVariable Long id) {
         postService.increaseViewCount(id);
         return "success";
+    }
+
+    /**
+     * ⭐ 新增：获取我发布的帖子
+     */
+    @GetMapping("/my")
+    public List<PostVo> getMyPosts(@RequestHeader("Authorization") String token) {
+        String username = jwtUtil.getUsername(token);
+        SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
+
+        // 复用 Service 里的逻辑，或者直接查
+        // 为了简单，我们这里直接写查询逻辑
+        QueryWrapper<Post> query = new QueryWrapper<>();
+        query.eq("user_id", user.getId());
+        query.orderByDesc("create_time");
+
+        List<Post> posts = postMapper.selectList(query);
+
+        // 转 VO
+        List<PostVo> result = new ArrayList<>();
+        for (Post p : posts) {
+            PostVo vo = new PostVo();
+            BeanUtils.copyProperties(p, vo);
+            vo.setAuthorName(user.getNickname());
+            vo.setAuthorAvatar(user.getAvatar());
+            result.add(vo);
+        }
+        return result;
     }
 }

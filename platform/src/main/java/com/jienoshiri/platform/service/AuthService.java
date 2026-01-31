@@ -49,7 +49,6 @@ public class AuthService {
 
         // 设置身份 (直接存字符串，没问题)
         user.setIdentityType(dto.getIdentityType());
-
         user.setIsVerified(false); // 默认未认证
         user.setStatus(1);         // 状态正常
 
@@ -61,7 +60,7 @@ public class AuthService {
         if ("student".equals(type)) {
             initReputation = 100;  // 留学生：高信任起步
         } else if ("agent".equals(type)) {
-            initReputation = -50;  // 中介：负分起步，防止发广告
+            initReputation = -20;  // 中介：负分起步，防止发广告
         } else if ("worker".equals(type)) {
             initReputation = 10;   // 工作党：少量信任
         } else {

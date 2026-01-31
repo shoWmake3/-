@@ -231,6 +231,8 @@ public class PostService {
         }
 
         // (可选) 给评价人自己也加点辛苦分 (+1)
+        // ⭐⭐ 核心新增：给发评论的人 +2 分 ⭐⭐
+        changeReputation(comment.getUserId(), 2, "发布评论奖励");
         // changeReputation(user.getId(), 1, "发布评价");
     }
 
