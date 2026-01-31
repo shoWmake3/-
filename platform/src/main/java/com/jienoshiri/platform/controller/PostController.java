@@ -145,6 +145,9 @@ public class PostController {
             BeanUtils.copyProperties(p, vo);
             vo.setAuthorName(user.getNickname());
             vo.setAuthorAvatar(user.getAvatar());
+            // ⭐ 核心修复：补全身份和声望信息，否则前端拿不到数据
+            vo.setAuthorIdentity(user.getIdentityType());
+            vo.setAuthorReputation(user.getReputation());
             result.add(vo);
         }
         return result;

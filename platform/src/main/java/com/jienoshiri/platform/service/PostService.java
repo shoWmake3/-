@@ -186,8 +186,17 @@ public class PostService {
             like.setCreateTime(LocalDateTime.now());
             postLikeMapper.insert(like);
 
-            // ⭐ 给帖子作者加分 (+1分)
-            changeReputation(post.getUserId(), 1, "帖子被点赞");
+            // 更新: いいねした人の情報を取得
+            SysUser liker = userMapper.selectById(userId);
+            int bonus = 1; // デフォルトは +1
+
+            // ⭐ 追加ロジック: 高声望ユーザーからのいいねは価値が高い
+            if (liker != null && liker.getReputation() >= 100) {
+                bonus = 3; // 認証先輩なら +3
+            }
+
+            // 作者に声望ボーナスを与える
+            changeReputation(post.getUserId(), bonus, "被高信誉用户点赞");
 
             // 更新帖子点赞数
             post.setLikeCount(post.getLikeCount() + 1);
