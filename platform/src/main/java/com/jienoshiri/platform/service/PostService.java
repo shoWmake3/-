@@ -49,6 +49,8 @@ public class PostService {
         post.setCommentCount(0);
         post.setStatus(1); // 默认正常
         postMapper.insert(post);
+        // ⭐ 新增：发帖奖励声望
+        changeReputation(post.getUserId(), 5, "发布帖子");
     }
 
     /**
@@ -153,30 +155,40 @@ public class PostService {
         return result;
     }
 
-    /**
-     * 点赞 / 取消点赞
-     */
     public boolean toggleLike(Long postId, Long userId) {
+        // 1. 检查是否点过赞
         QueryWrapper<PostLike> query = new QueryWrapper<>();
         query.eq("post_id", postId);
         query.eq("user_id", userId);
         PostLike exists = postLikeMapper.selectOne(query);
 
+        // 2. 查帖子信息 (为了获取作者ID)
         Post post = postMapper.selectById(postId);
         if (post == null) return false;
 
         if (exists != null) {
+            // --- 取消点赞逻辑 ---
             postLikeMapper.deleteById(exists.getId());
             post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
             postMapper.updateById(post);
+
+            // (可选) 取消点赞是否要扣分？通常不扣，或者扣 -1
+            // changeReputation(post.getUserId(), -1, "取消点赞");
+
             return false;
         } else {
+            // --- 点赞逻辑 ---
             PostLike like = new PostLike();
             like.setPostId(postId);
             like.setUserId(userId);
             like.setCreateTime(LocalDateTime.now());
             postLikeMapper.insert(like);
 
+            // ⭐ 核心修改：给帖子作者加分 (+1分)
+            // 注意：是给 post.getUserId() (作者) 加分，不是给 userId (点赞人) 加分
+            changeReputation(post.getUserId(), 1, "帖子被点赞");
+
+            // 更新帖子点赞数
             post.setLikeCount(post.getLikeCount() + 1);
             postMapper.updateById(post);
             return true;
@@ -184,16 +196,42 @@ public class PostService {
     }
 
     /**
-     * 发表评论
+     * 发表评论 / 评分
      */
     public void addComment(Comment comment) {
+        // 1. 获取评价人 (用于计算权重)
+        SysUser user = userMapper.selectById(comment.getUserId());
+
+        // 计算评价人的权重快照 (1.0 基准 + 声望加成)
+        double currentReputation = (user.getReputation() == null) ? 0 : user.getReputation();
+        double weight = 1.0 + (currentReputation / 100.0) * 0.5;
+        comment.setWeightSnapshot(weight);
+
+        // 2. 处理评分 (空值默认为0)
+        if (comment.getScore() == null) {
+            comment.setScore(0.0);
+        }
+
+        // 3. 保存评论
         comment.setCreateTime(LocalDateTime.now());
         commentMapper.insert(comment);
+
+        // 4. 更新帖子的评论数
         Post post = postMapper.selectById(comment.getPostId());
         if (post != null) {
             post.setCommentCount(post.getCommentCount() + 1);
             postMapper.updateById(post);
+
+            // ⭐⭐ 核心修改：如果被打高分，奖励帖子作者 ⭐⭐
+            // 逻辑：如果评分 >= 4.0，作者声望 +3
+            if (comment.getScore() >= 4.0) {
+                // 注意：这里是给 post.getUserId() (作者) 加分
+                changeReputation(post.getUserId(), 3, "获得高分评价");
+            }
         }
+
+        // (可选) 给评价人自己也加点辛苦分 (+1)
+        // changeReputation(user.getId(), 1, "发布评价");
     }
 
     public List<CommentVo> getComments(Long postId) {
@@ -224,5 +262,15 @@ public class PostService {
         }
     }
 
+    // 辅助方法：修改声望
+    private void changeReputation(Long userId, int change, String reason) {
+        SysUser user = userMapper.selectById(userId);
+        if (user != null) {
+            int current = (user.getReputation() == null) ? 0 : user.getReputation();
+            user.setReputation(current + change);
+            userMapper.updateById(user);
+            System.out.println("【声望变动】用户 " + user.getNickname() + " " + reason + " -> " + user.getReputation());
+        }
+    }
 
 }

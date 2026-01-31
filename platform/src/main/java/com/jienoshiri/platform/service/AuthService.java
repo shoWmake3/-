@@ -33,20 +33,47 @@ public class AuthService {
             throw new RuntimeException("用户名已存在！");
         }
 
+
+        // ⭐ 新增：检查邮箱是否已存在 (修复这个 BUG)
+        QueryWrapper<SysUser> queryEmail = new QueryWrapper<>();
+        queryEmail.eq("email", dto.getEmail());
+        if (userMapper.selectCount(queryEmail) > 0) {
+            throw new RuntimeException("该邮箱已被注册，请直接登录！");
+        }
+
         // 2. 创建用户对象
         SysUser user = new SysUser();
         user.setUsername(dto.getUsername());
         user.setNickname(dto.getNickname());
         user.setEmail(dto.getEmail());
+
+        // 设置身份 (直接存字符串，没问题)
         user.setIdentityType(dto.getIdentityType());
+
         user.setIsVerified(false); // 默认未认证
-        user.setReputation(0);     // 默认声望为0
         user.setStatus(1);         // 状态正常
 
-        // 3. ⭐ 核心：密码必须加密存储！
+        // 3. ⭐ 核心修改：根据身份初始化声望 (Reputation)
+        // 逻辑依据：留学生是社区信任基石(给分)，中介需要积累信誉(扣分/低分)
+        String type = dto.getIdentityType();
+        int initReputation = 0;
+
+        if ("student".equals(type)) {
+            initReputation = 100;  // 留学生：高信任起步
+        } else if ("agent".equals(type)) {
+            initReputation = -50;  // 中介：负分起步，防止发广告
+        } else if ("worker".equals(type)) {
+            initReputation = 10;   // 工作党：少量信任
+        } else {
+            initReputation = 0;    // 游客：0
+        }
+
+        user.setReputation(initReputation);
+
+        // 4. 密码加密
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // 4. 保存到数据库
+        // 5. 保存到数据库
         userMapper.insert(user);
 
         return "注册成功";
