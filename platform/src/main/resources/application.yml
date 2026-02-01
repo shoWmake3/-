@@ -21,6 +21,19 @@ spring:
         max-request-size: 200MB
         # 超过这个大小则写入磁盘临时文件，防止内存溢出
         file-size-threshold: 2KB
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""  # パスワードがない場合は空文字、設定している場合は記入
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1
+          max-idle: 8
+          min-idle: 0
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml

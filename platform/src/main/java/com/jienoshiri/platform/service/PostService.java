@@ -14,6 +14,7 @@ import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.utils.LocationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate; // ⭐ 导入 Redis
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -41,6 +42,9 @@ public class PostService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate; // ⭐ 注入 Redis 模板
 
     /**
      * 发布帖子
@@ -112,6 +116,14 @@ public class PostService {
                 Long count = postLikeMapper.selectCount(new QueryWrapper<PostLike>()
                         .eq("user_id", currentUserId).eq("post_id", post.getId()));
                 vo.setIsLiked(count > 0);
+            }
+
+            // ⭐ Redis 实时浏览量合并显示 (热点数据处理)
+            // 从 Redis 取出增量，加到数据库的 viewCount 上显示给前端
+            String viewKey = "post:view:" + post.getId();
+            Integer redisViews = (Integer) redisTemplate.opsForValue().get(viewKey);
+            if (redisViews != null) {
+                vo.setViewCount(vo.getViewCount() + redisViews);
             }
 
             // ⭐⭐ 混合加权核心逻辑 ⭐⭐
@@ -300,12 +312,14 @@ public class PostService {
         return result;
     }
 
+    /**
+     * ⭐ 增加浏览量 (Redis 优化版 - 热点数据处理)
+     */
     public void increaseViewCount(Long postId) {
-        Post post = postMapper.selectById(postId);
-        if (post != null) {
-            post.setViewCount(post.getViewCount() + 1);
-            postMapper.updateById(post);
-        }
+        // 不再直接写 MySQL，而是写 Redis
+        String key = "post:view:" + postId;
+        redisTemplate.opsForValue().increment(key);
+        // 注意：这里不再调用 postMapper.updateById，而是等待定时任务同步
     }
 
     // 辅助方法：修改声望
