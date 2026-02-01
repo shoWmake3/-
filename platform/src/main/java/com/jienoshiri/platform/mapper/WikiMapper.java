@@ -1,4 +1,7 @@
 package com.jienoshiri.platform.mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jienoshiri.platform.entity.Wiki;
+import org.apache.ibatis.annotations.Mapper;
 
-public interface WikiMapper {
-}
+@Mapper
+public interface WikiMapper extends BaseMapper<Wiki> {}

@@ -48,6 +48,12 @@
 			"style": {
 				"navigationBarTitleText": "聊天"
 			}
+		},
+		{
+			"path": "pages/wiki/wiki",
+			"style": {
+				"navigationBarTitleText": "百科知识"
+			}
 		}
 	],
 	"globalStyle": {
@@ -79,6 +85,12 @@
 				"iconPath": "static/logo.png",
 				"selectedIconPath": "static/logo.png",
 				"text": "消息"
+			},
+			{
+				"pagePath": "pages/wiki/wiki",
+				"iconPath": "static/logo.png",
+				"selectedIconPath": "static/logo.png",
+				"text": "百科"
 			}
 		]
 	}
