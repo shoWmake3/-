@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 public class AuthService {
 
@@ -23,56 +25,63 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     /**
-     * 用户注册
+     * 用户注册 (修正版)
      */
     public String register(RegisterDto dto) {
-        // 1. 检查用户名是否已存在
+        // 1. 查重逻辑 (用户名 & 邮箱)
         QueryWrapper<SysUser> query = new QueryWrapper<>();
         query.eq("username", dto.getUsername());
         if (userMapper.selectCount(query) > 0) {
             throw new RuntimeException("用户名已存在！");
         }
 
-
-        // ⭐ 新增：检查邮箱是否已存在 (修复这个 BUG)
-        QueryWrapper<SysUser> queryEmail = new QueryWrapper<>();
-        queryEmail.eq("email", dto.getEmail());
-        if (userMapper.selectCount(queryEmail) > 0) {
-            throw new RuntimeException("该邮箱已被注册，请直接登录！");
+        if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            QueryWrapper<SysUser> queryEmail = new QueryWrapper<>();
+            queryEmail.eq("email", dto.getEmail());
+            if (userMapper.selectCount(queryEmail) > 0) {
+                throw new RuntimeException("该邮箱已被注册，请直接登录！");
+            }
         }
 
-        // 2. 创建用户对象
+        // 2. 创建用户
         SysUser user = new SysUser();
         user.setUsername(dto.getUsername());
         user.setNickname(dto.getNickname());
-        user.setEmail(dto.getEmail());
-
-        // 设置身份 (直接存字符串，没问题)
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
         user.setIdentityType(dto.getIdentityType());
-        user.setIsVerified(false); // 默认未认证
-        user.setStatus(1);         // 状态正常
+        user.setRole("user");
+        user.setCreateTime(LocalDateTime.now());
+        user.setStatus(1); // status 是 Integer，可以用 1
 
-        // 3. ⭐ 核心修改：根据身份初始化声望 (Reputation)
-        // 逻辑依据：留学生是社区信任基石(给分)，中介需要积累信誉(扣分/低分)
+        // 3. 声望初始化
         String type = dto.getIdentityType();
         int initReputation = 0;
-
         if ("student".equals(type)) {
-            initReputation = 100;  // 留学生：高信任起步
+            initReputation = 100;
         } else if ("agent".equals(type)) {
-            initReputation = -20;  // 中介：负分起步，防止发广告
+            initReputation = -20;
         } else if ("worker".equals(type)) {
-            initReputation = 10;   // 工作党：少量信任
-        } else {
-            initReputation = 0;    // 游客：0
+            initReputation = 10;
         }
-
         user.setReputation(initReputation);
 
-        // 4. 密码加密
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        // 4. ⭐ 核心修正：身份审核逻辑 (int -> boolean)
+        if ("student".equals(type) || "agent".equals(type)) {
+            if (dto.getIdentityProof() != null && !dto.getIdentityProof().isEmpty()) {
+                user.setIdentityProof(dto.getIdentityProof());
+                user.setAuditStatus(1);     // Integer
+                user.setIsVerified(false);  // ⭐ Fix: 0 -> false
+            } else {
+                user.setAuditStatus(0);
+                user.setIsVerified(false);  // ⭐ Fix: 0 -> false
+            }
+        } else {
+            user.setAuditStatus(0);
+            user.setIsVerified(true);   // ⭐ Fix: 1 -> true
+        }
 
-        // 5. 保存到数据库
+        // 5. 密码加密并保存
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         userMapper.insert(user);
 
         return "注册成功";

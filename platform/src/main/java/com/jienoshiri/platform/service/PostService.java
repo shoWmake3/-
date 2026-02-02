@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PostService {
@@ -60,6 +61,16 @@ public class PostService {
 
     @Autowired
     private SensitiveWordUtil sensitiveWordUtil;
+
+    @Autowired
+    private com.jienoshiri.platform.mapper.SysConfigMapper sysConfigMapper; // 注入Mapper
+
+    private Map<String, Double> weightCache = new java.util.HashMap<>();
+
+    @jakarta.annotation.PostConstruct
+    public void initWeights() {
+        refreshWeights();
+    }
 
     /**
      * 发布帖子
@@ -196,35 +207,42 @@ public class PostService {
                 vo.setViewCount(vo.getViewCount() + redisViews);
             }
 
-            // --- 评分逻辑 ---
+            // ⭐⭐ 混合加权核心逻辑 (修改为动态读取) ⭐⭐
             double score = 0;
 
+            // 权重 1: UserCF
+            double wUserCF = getWeight("weight_user_cf", 1000.0);
             if (userCfIds.contains(post.getId())) {
-                score += 1000;
+                score += wUserCF;
                 vo.setTitle("【猜你喜欢】" + vo.getTitle());
             }
 
+            // 权重 2: Content-Based
+            double wContent = getWeight("weight_content", 500.0);
             if (contentBasedIds.contains(post.getId())) {
-                score += 500;
+                score += wContent;
                 if (!vo.getTitle().startsWith("【猜你喜欢】")) {
                     vo.setTitle("【精选】" + vo.getTitle());
                 }
             }
 
-            // 作者声望加权
+            // 权重 3: 作者声望
+            double wRep = getWeight("weight_reputation", 0.5);
             if (author != null && author.getReputation() != null) {
-                double repBonus = author.getReputation() * 0.5;
+                double repBonus = author.getReputation() * wRep;
                 score += Math.min(Math.max(repBonus, -500), 200);
             }
 
-            // LBS 距离加权
+            // 权重 4: LBS
+            double wLbs = getWeight("weight_lbs", 300.0);
             if (vo.getDistance() != null && vo.getDistance() < 10) {
-                score += 300;
+                score += wLbs;
             }
 
-            // Wiki 百科加权
+            // 权重 5: Wiki
+            double wWiki = getWeight("weight_wiki", 200.0);
             if (post.getStatus() == 3) {
-                score += 200;
+                score += wWiki;
             }
 
             score += (double) post.getId() / 1000000.0;
@@ -385,5 +403,21 @@ public class PostService {
             System.err.println(">>> [OSM] 逆解析失败: " + e.getMessage());
         }
         return "未知地点";
+    }
+
+    // 刷新配置的方法 (Public供Controller调用)
+    public void refreshWeights() {
+        List<com.jienoshiri.platform.entity.SysConfig> list = sysConfigMapper.selectList(null);
+        for (com.jienoshiri.platform.entity.SysConfig config : list) {
+            try {
+                weightCache.put(config.getParamKey(), Double.parseDouble(config.getParamValue()));
+            } catch (Exception e) {}
+        }
+        System.out.println(">>> 推荐系统权重已更新: " + weightCache);
+    }
+
+    // 辅助方法：获取权重，取不到则用默认值
+    private double getWeight(String key, double defaultValue) {
+        return weightCache.getOrDefault(key, defaultValue);
     }
 }

@@ -20,11 +20,14 @@ public class SysUser {
     private String phone;         // 新增
     private String avatar;        // 新增
     private String identityType;
+    private String identityProof; // 证件照URL
+    private Integer auditStatus;  // 0:无, 1:待审核, 2:通过, 3:驳回
     private Integer reputation;
     private Boolean isVerified;   // 对应 tinyint(1)
     private Integer status;       // 新增: 1正常 0封禁
     private LocalDateTime createTime;
     private LocalDateTime updateTime; // 新增
+    private String rejectReason;   // 审核拒绝理由
 
     private String role;
 

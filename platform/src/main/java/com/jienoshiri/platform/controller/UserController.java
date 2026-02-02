@@ -1,8 +1,10 @@
 package com.jienoshiri.platform.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.jienoshiri.platform.dto.RegisterDto; // 👈 记得导入这个
 import com.jienoshiri.platform.entity.SysUser;
 import com.jienoshiri.platform.mapper.UserMapper;
+import com.jienoshiri.platform.service.AuthService; // 👈 记得导入这个
 import com.jienoshiri.platform.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +19,20 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ⭐ 更新用户信息接口 (比如头像、昵称)
+    // ⭐ 注入 AuthService，否则无法调用注册逻辑
+    @Autowired
+    private AuthService authService;
+
+    // ⭐⭐ 之前缺失的注册接口，必须补上！ ⭐⭐
+    // 对应前端请求: POST http://localhost:8080/user/register
+    @PostMapping("/register")
+    public String register(@RequestBody RegisterDto dto) {
+        return authService.register(dto);
+    }
+
+    // 更新用户信息接口
     @PostMapping("/update")
     public String updateUserInfo(@RequestBody SysUser user, @RequestHeader("Authorization") String token) {
-        // 1. 鉴权：确保是改自己的信息
         String username = jwtUtil.getUsername(token);
         SysUser currentUser = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
 
@@ -28,30 +40,22 @@ public class UserController {
             return "用户不存在";
         }
 
-        // 2. 只更新允许修改的字段
-        if (user.getAvatar() != null) {
-            currentUser.setAvatar(user.getAvatar());
-        }
-        if (user.getNickname() != null) {
-            currentUser.setNickname(user.getNickname());
-        }
-        // ... 其他字段按需添加
+        // 只更新允许修改的字段
+        if (user.getAvatar() != null) currentUser.setAvatar(user.getAvatar());
+        if (user.getNickname() != null) currentUser.setNickname(user.getNickname());
 
-        // 3. 存入数据库
         userMapper.updateById(currentUser);
         return "更新成功";
     }
 
-    /**
-     * ⭐ 新增：获取当前用户详细信息 (用于个人中心)
-     */
+    // 获取当前用户详细信息
     @GetMapping("/info")
     public SysUser getUserInfo(@RequestHeader("Authorization") String token) {
         String username = jwtUtil.getUsername(token);
-        // 查询用户，注意：生产环境建议用 VO 过滤掉 password 等敏感字段，这里毕设演示直接传
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
-        // 密码脱敏
-        user.setPassword(null);
+        if (user != null) {
+            user.setPassword(null); // 密码脱敏
+        }
         return user;
     }
 }

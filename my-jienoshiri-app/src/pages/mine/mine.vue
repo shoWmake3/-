@@ -55,6 +55,10 @@
         <text style="color: #007aff; font-weight: bold;">🛡️ 内容审核后台</text>
         <text class="arrow">></text>
       </div>
+      <div class="menu-item" v-if="user.role === 'admin'" @click="goToDashboard">
+        <text style="color: #9c27b0; font-weight: bold;">📊 运营数据大屏</text>
+        <text class="arrow">></text>
+      </div>
     </div>
 
     <div class="history-section">
@@ -211,6 +215,10 @@ const getProgressWidth = (score) => {
 
 const goToAdmin = () => {
   uni.navigateTo({ url: '/pages/admin/audit' });
+};
+
+const goToDashboard = () => {
+  uni.navigateTo({ url: '/pages/admin/dashboard' });
 };
 </script>
 
