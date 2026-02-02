@@ -5,7 +5,7 @@
         <image class="avatar" :src="user.avatar || '/static/logo.png'" mode="aspectFill"></image>
         <div class="camera-icon">📷</div>
       </div>
-      
+
       <div class="info-section">
         <text class="nickname">{{ user.nickname || '未登录' }}</text>
         <view class="tags-row">
@@ -49,6 +49,10 @@
     <div class="menu-list">
       <div class="menu-item" @click="handleLogout">
         <text style="color: #ff2442;">退出登录</text>
+        <text class="arrow">></text>
+      </div>
+      <div class="menu-item" v-if="user.role === 'admin'" @click="goToAdmin">
+        <text style="color: #007aff; font-weight: bold;">🛡️ 内容审核后台</text>
         <text class="arrow">></text>
       </div>
     </div>
@@ -143,10 +147,10 @@ const uploadAvatar = (filePath) => {
       try {
         const data = JSON.parse(res.data);
         const url = data.data || data; // 兼容不同返回格式
-        
+
         // 更新前端
         user.value.avatar = url;
-        
+
         // 更新后端
         const token = uni.getStorageSync('token');
         uni.request({
@@ -204,53 +208,248 @@ const getProgressWidth = (score) => {
   let p = (score / 500) * 100; // 假设500分满级
   return p > 100 ? 100 : p;
 };
+
+const goToAdmin = () => {
+  uni.navigateTo({ url: '/pages/admin/audit' });
+};
 </script>
 
 <style>
-.container { background-color: #f8f8f8; min-height: 100vh; padding: 15px; }
+.container {
+  background-color: #f8f8f8;
+  min-height: 100vh;
+  padding: 15px;
+}
 
 /* 1. 卡片样式 */
-.profile-card { background: #fff; border-radius: 12px; padding: 25px 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 15px; }
+.profile-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  margin-bottom: 15px;
+}
 
 /* 头像 */
-.avatar-section { position: relative; margin-bottom: 15px; }
-.avatar { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-.camera-icon { position: absolute; bottom: 0; right: 0; background: #007aff; color: #fff; width: 22px; height: 22px; border-radius: 50%; text-align: center; line-height: 22px; font-size: 12px; border: 2px solid #fff; }
+.avatar-section {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.camera-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #007aff;
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-size: 12px;
+  border: 2px solid #fff;
+}
 
 /* 信息 */
-.info-section { text-align: center; width: 100%; }
-.nickname { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; display: block; }
-.tags-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 5px; }
-.identity-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #f0f0f0; color: #666; }
-.identity-tag.student { background: #e3f2fd; color: #007aff; }
-.identity-tag.agent { background: #fff3e0; color: #ff9800; }
-.level-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #fff9c4; color: #fbc02d; font-weight: bold; }
-.bio { font-size: 12px; color: #ccc; margin-top: 5px; display: block; }
+.info-section {
+  text-align: center;
+  width: 100%;
+}
+
+.nickname {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.tags-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.identity-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f0f0f0;
+  color: #666;
+}
+
+.identity-tag.student {
+  background: #e3f2fd;
+  color: #007aff;
+}
+
+.identity-tag.agent {
+  background: #fff3e0;
+  color: #ff9800;
+}
+
+.level-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fff9c4;
+  color: #fbc02d;
+  font-weight: bold;
+}
+
+.bio {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 5px;
+  display: block;
+}
 
 /* ⭐ 声望条 */
-.reputation-bar-box { width: 100%; margin: 20px 0; background: #fafafa; padding: 10px; border-radius: 8px; }
-.rep-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: bold; }
-.rep-val { color: #ff9800; }
-.progress-bg { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #ffc107, #ff9800); border-radius: 3px; transition: width 0.5s; }
-.rep-tip { font-size: 10px; color: #999; text-align: center; display: block; }
+.reputation-bar-box {
+  width: 100%;
+  margin: 20px 0;
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.rep-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.rep-val {
+  color: #ff9800;
+}
+
+.progress-bg {
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+
+.rep-tip {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+  display: block;
+}
 
 /* 统计 */
-.stats-row { display: flex; justify-content: space-around; width: 100%; border-top: 1px solid #eee; padding-top: 15px; margin-top: 5px; }
-.stat-item { display: flex; flex-direction: column; align-items: center; }
-.num { font-weight: bold; font-size: 16px; color: #333; }
-.label { font-size: 12px; color: #999; margin-top: 2px; }
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  margin-top: 5px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.num {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}
+
+.label {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
 
 /* 2. 菜单 */
-.menu-list { background: #fff; border-radius: 12px; padding: 0 20px; margin-bottom: 15px; }
-.menu-item { display: flex; justify-content: space-between; padding: 15px 0; font-size: 15px; color: #333; }
-.arrow { color: #ccc; }
+.menu-list {
+  background: #fff;
+  border-radius: 12px;
+  padding: 0 20px;
+  margin-bottom: 15px;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.arrow {
+  color: #ccc;
+}
 
 /* 3. 历史记录 */
-.history-section { background: #fff; border-radius: 12px; padding: 15px; min-height: 200px; }
-.section-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid #007aff; }
-.post-item { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
-.post-title { font-size: 15px; color: #333; margin-bottom: 6px; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.post-meta { display: flex; justify-content: space-between; font-size: 12px; color: #999; }
-.empty-box { text-align: center; padding: 40px 0; color: #ccc; font-size: 13px; }
+.history-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  min-height: 200px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  padding-left: 10px;
+  border-left: 4px solid #007aff;
+}
+
+.post-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.post-title {
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 6px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #999;
+}
+
+.empty-box {
+  text-align: center;
+  padding: 40px 0;
+  color: #ccc;
+  font-size: 13px;
+}
 </style>
