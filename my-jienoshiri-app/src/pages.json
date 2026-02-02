@@ -54,6 +54,18 @@
 			"style": {
 				"navigationBarTitleText": "百科知识"
 			}
+		},
+		{
+			"path": "pages/admin/audit",
+			"style": {
+				"navigationBarTitleText": "内容审核工作台"
+			}
+		},
+		{
+			"path": "pages/publish/osm-map",
+			"style": {
+				"navigationBarTitleText": "选择位置(OSM)"
+			}
 		}
 	],
 	"globalStyle": {

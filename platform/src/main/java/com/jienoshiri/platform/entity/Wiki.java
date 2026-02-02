@@ -21,4 +21,6 @@ public class Wiki {
     private Integer viewCount;  // 浏览量
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private Integer status; // 0:待审 1:正常 2:拒绝
+    private String rejectReason;
 }

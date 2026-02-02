@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 登录、注册、测试、帖子列表(游客可看) -> 放行
                         // 修改这一行
-                        .requestMatchers("/auth/**", "/test", "/post/list", "/post/comments", "/post/view/**","/tool/**", "/oss/**","/error","/wiki/**").permitAll()
+                        .requestMatchers("/auth/**", "/test", "/post/list", "/post/comments", "/post/view/**","/tool/**", "/oss/**","/error","/wiki/**","/post/reverse-geo").permitAll()
                         // 其他接口(如发帖) -> 必须认证
                         .anyRequest().authenticated()
                 )

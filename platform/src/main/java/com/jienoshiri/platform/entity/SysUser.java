@@ -26,6 +26,8 @@ public class SysUser {
     private LocalDateTime createTime;
     private LocalDateTime updateTime; // 新增
 
+    private String role;
+
     // 在 SysUser 实体类中建议添加一个获取权重的逻辑
     public double calculateWeight() {
         if (this.reputation == null || this.reputation < 0) return 0.0;

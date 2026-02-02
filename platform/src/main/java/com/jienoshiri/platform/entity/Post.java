@@ -36,4 +36,7 @@ public class Post {
 
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
+    // ⭐⭐ 新增：拒绝理由 (之前漏加了这个) ⭐⭐
+    private String rejectReason;
 }

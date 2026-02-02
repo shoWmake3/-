@@ -152,4 +152,12 @@ public class PostController {
         }
         return result;
     }
+
+    /**
+     * ⭐ 工具接口：前端地图选点时调用，获取地址名称
+     */
+    @GetMapping("/reverse-geo")
+    public String reverseGeo(@RequestParam BigDecimal lat, @RequestParam BigDecimal lon) {
+        return postService.reverseGeocode(lat, lon);
+    }
 }
