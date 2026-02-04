@@ -1,82 +1,128 @@
 <template>
-  <div class="container">
-    <div class="profile-card">
-      <div class="avatar-section" @click="handleAvatarClick">
-        <image class="avatar" :src="user.avatar || '/static/logo.png'" mode="aspectFill"></image>
-        <div class="camera-icon">📷</div>
-      </div>
+  <view class="page-container">
+    
+    <div class="ambient-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="noise-overlay"></div>
+    </div>
 
-      <div class="info-section">
-        <text class="nickname">{{ user.nickname || '未登录' }}</text>
-        <view class="tags-row">
-          <text class="identity-tag" :class="user.identityType">
-            {{ getIdentityName(user.identityType) }}
-          </text>
-          <text class="level-tag">
-            {{ getBadgeIcon(user.reputation) }} {{ getBadgeName(user.reputation) }}
-          </text>
+    <scroll-view scroll-y class="scroll-body" show-scrollbar="false">
+      
+      <view class="status-bar-spacer"></view>
+      
+      <view style="height: 20px;"></view>
+
+      <view class="profile-card">
+        <view class="card-top-row">
+          <text class="card-title">My Profile</text>
+          <view class="setting-btn" @click="handleLogout">
+            <text>退出登录</text>
+          </view>
         </view>
-        <text class="bio">ID: {{ user.id || '--' }}</text>
-      </div>
 
-      <div class="reputation-bar-box">
-        <div class="rep-header">
-          <text class="rep-label">信誉声望</text>
-          <text class="rep-val">{{ user.reputation || 0 }}</text>
-        </div>
-        <div class="progress-bg">
-          <div class="progress-fill" :style="{ width: getProgressWidth(user.reputation) + '%' }"></div>
-        </div>
-        <text class="rep-tip">发帖 +5 / 评论 +2 / 获赞 +1</text>
-      </div>
+        <view class="user-main">
+          <view class="avatar-box" @click="handleAvatarClick">
+            <image class="avatar" :src="user.avatar || '/static/logo.png'" mode="aspectFill"></image>
+            <view class="edit-badge">📷</view>
+          </view>
+          
+          <view class="info-box">
+            <view class="name-row">
+              <text class="nickname">{{ user.nickname || '未登录' }}</text>
+              <view class="id-tag">ID: {{ user.id || '--' }}</view>
+            </view>
+            
+            <view class="tags-row">
+              <view class="tag-pill identity" :class="user.identityType">
+                {{ getIdentityName(user.identityType) }}
+              </view>
+              <view class="tag-pill level">
+                {{ getBadgeIcon(user.reputation) }} {{ getBadgeName(user.reputation) }}
+              </view>
+            </view>
+          </view>
+        </view>
 
-      <div class="stats-row">
-        <div class="stat-item">
-          <text class="num">0</text>
-          <text class="label">关注</text>
-        </div>
-        <div class="stat-item">
-          <text class="num">0</text>
-          <text class="label">粉丝</text>
-        </div>
-        <div class="stat-item">
-          <text class="num">{{ totalLikes || 0 }}</text>
-          <text class="label">获赞</text>
-        </div>
-      </div>
-    </div>
+        <view class="rep-section">
+          <view class="rep-header">
+            <text class="rep-label">信誉声望</text>
+            <text class="rep-val">{{ user.reputation || 0 }}</text>
+          </view>
+          <view class="progress-track">
+            <view class="progress-bar" :style="{ width: getProgressWidth(user.reputation) + '%' }">
+              <view class="shine"></view>
+            </view>
+          </view>
+          <text class="rep-desc">发帖 +5 / 评论 +2 / 获赞 +1</text>
+        </view>
 
-    <div class="menu-list">
-      <div class="menu-item" @click="handleLogout">
-        <text style="color: #ff2442;">退出登录</text>
-        <text class="arrow">></text>
-      </div>
-      <div class="menu-item" v-if="user.role === 'admin'" @click="goToAdmin">
-        <text style="color: #007aff; font-weight: bold;">🛡️ 内容审核后台</text>
-        <text class="arrow">></text>
-      </div>
-      <div class="menu-item" v-if="user.role === 'admin'" @click="goToDashboard">
-        <text style="color: #9c27b0; font-weight: bold;">📊 运营数据大屏</text>
-        <text class="arrow">></text>
-      </div>
-    </div>
+        <view class="stats-grid">
+          <view class="stat-item">
+            <text class="stat-num">0</text>
+            <text class="stat-label">关注</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-num">0</text>
+            <text class="stat-label">粉丝</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-num">{{ totalLikes || 0 }}</text>
+            <text class="stat-label">获赞</text>
+          </view>
+        </view>
+      </view>
 
-    <div class="history-section">
-      <div class="section-title">我的发布</div>
-      <div class="post-list">
-        <div class="post-item" v-for="(item, index) in myPosts" :key="index" @click="goToDetail(item)">
-          <text class="post-title">{{ item.title }}</text>
-          <div class="post-meta">
-            <text class="date">{{ formatTime(item.createTime) }}</text>
-            <text class="stats">👁️ {{ item.viewCount || 0 }} · ❤️ {{ item.likeCount || 0 }}</text>
-          </div>
-        </div>
-        <div v-if="myPosts.length === 0" class="empty-box">
-          <text>暂无发布内容，快去发帖赚声望吧！</text>
-        </div>
-      </div>
-    </div>
-  </div>
+      <view class="menu-card admin-panel" v-if="user.role === 'admin'">
+        <view class="menu-header">管理中心</view>
+        <view class="admin-grid">
+          <view class="admin-btn blue" @click="goToAdmin">
+            <text class="btn-icon">🛡️</text>
+            <text>内容审核</text>
+          </view>
+          <view class="admin-btn purple" @click="goToDashboard">
+            <text class="btn-icon">📊</text>
+            <text>数据大屏</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="menu-card">
+        <view class="menu-header">我的发布</view>
+        <view class="post-list">
+          <view class="post-item" v-for="(item, index) in myPosts" :key="index" @click="goToDetail(item)">
+            <view class="post-left">
+              <text class="post-icon">📝</text>
+              <view class="post-info">
+                <text class="post-title">{{ item.title }}</text>
+                <text class="post-date">{{ formatTime(item.createTime) }}</text>
+              </view>
+            </view>
+            <view class="post-right">
+              <text class="post-stat">👁️ {{ item.viewCount || 0 }}</text>
+              <text class="post-stat">❤️ {{ item.likeCount || 0 }}</text>
+            </view>
+          </view>
+          
+          <view v-if="myPosts.length === 0" class="empty-state">
+            <text class="empty-icon">📭</text>
+            <text>暂无发布内容</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="logout-btn-box">
+        <button class="logout-btn" @click="handleLogout">退出登录</button>
+      </view>
+
+      <view class="bottom-safe-spacer"></view>
+      
+    </scroll-view>
+
+  </view>
 </template>
 
 <script setup>
@@ -84,32 +130,24 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 
 const user = ref({
-  nickname: '加载中...',
-  avatar: '',
-  id: '',
-  identityType: '',
-  reputation: 0
+  nickname: '加载中...', avatar: '', id: '', identityType: '', reputation: 0, role: ''
 });
-
 const myPosts = ref([]);
-const totalLikes = ref(0); // 计算总获赞数
+const totalLikes = ref(0);
 
 onShow(() => {
   const token = uni.getStorageSync('token');
   if (!token) return uni.navigateTo({ url: '/pages/login/login' });
 
-  // 1. 获取用户信息 (改用 /user/info 以获取声望)
   uni.request({
-    url: 'http://localhost:8080/user/info', // ⭐ 注意这里改成了 /user/info
+    url: 'http://localhost:8080/user/info',
     method: 'GET',
     header: { 'Authorization': token },
     success: (res) => {
       if (res.statusCode === 200) {
         user.value = res.data;
         uni.setStorageSync('user', res.data);
-      } else {
-        handleLogout();
-      }
+      } else { handleLogout(); }
     },
     fail: () => {
       const cacheUser = uni.getStorageSync('user');
@@ -117,7 +155,6 @@ onShow(() => {
     }
   });
 
-  // 2. 获取我的发布历史
   uni.request({
     url: 'http://localhost:8080/post/my',
     method: 'GET',
@@ -125,14 +162,12 @@ onShow(() => {
     success: (res) => {
       if (res.statusCode === 200) {
         myPosts.value = res.data;
-        // 简单计算一下总获赞
         totalLikes.value = res.data.reduce((sum, p) => sum + (p.likeCount || 0), 0);
       }
     }
   });
 });
 
-// --- 头像上传逻辑 (保留您原有的) ---
 const handleAvatarClick = () => {
   uni.chooseImage({
     count: 1,
@@ -150,12 +185,8 @@ const uploadAvatar = (filePath) => {
     success: (res) => {
       try {
         const data = JSON.parse(res.data);
-        const url = data.data || data; // 兼容不同返回格式
-
-        // 更新前端
+        const url = data.data || data;
         user.value.avatar = url;
-
-        // 更新后端
         const token = uni.getStorageSync('token');
         uni.request({
           url: 'http://localhost:8080/user/update',
@@ -181,283 +212,191 @@ const goToDetail = (item) => {
   uni.navigateTo({ url: '/pages/post-detail/post-detail' });
 };
 
-// --- 辅助函数 ---
 const formatTime = (t) => t ? t.split('T')[0] : '';
-
-// 身份名称映射
 const getIdentityName = (type) => {
   const map = { 'student': '留学生', 'agent': '中介/商户', 'worker': '打工人', 'tourist': '游客' };
   return map[type] || '用户';
 };
-
-// 声望相关逻辑
 const getBadgeName = (score) => {
   score = score || 0;
-  if (score < 0) return '需警惕';
-  if (score < 100) return '萌新';
-  if (score < 300) return '认证学长';
-  return '社区之星';
+  if (score < 0) return '需警惕'; if (score < 100) return '萌新'; if (score < 300) return '认证学长'; return '社区之星';
 };
-
 const getBadgeIcon = (score) => {
   score = score || 0;
-  if (score < 0) return '⚠️';
-  if (score < 100) return '🌱';
-  if (score < 300) return '🎓';
-  return '👑';
+  if (score < 0) return '⚠️'; if (score < 100) return '🌱'; if (score < 300) return '🎓'; return '👑';
 };
-
 const getProgressWidth = (score) => {
   if (!score || score < 0) return 0;
-  let p = (score / 500) * 100; // 假设500分满级
-  return p > 100 ? 100 : p;
+  let p = (score / 500) * 100; return p > 100 ? 100 : p;
 };
 
-const goToAdmin = () => {
-  uni.navigateTo({ url: '/pages/admin/audit' });
-};
-
-const goToDashboard = () => {
-  uni.navigateTo({ url: '/pages/admin/dashboard' });
-};
+const goToAdmin = () => { uni.navigateTo({ url: '/pages/admin/audit' }); };
+const goToDashboard = () => { uni.navigateTo({ url: '/pages/admin/dashboard' }); };
 </script>
 
 <style>
-.container {
-  background-color: #f8f8f8;
-  min-height: 100vh;
-  padding: 15px;
+:root {
+  --primary: #6366f1;
+  --text-main: #1e293b;
+  --text-sub: #64748b;
+  --glass-bg: rgba(255, 255, 255, 0.65);
 }
 
-/* 1. 卡片样式 */
-.profile-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 25px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  margin-bottom: 15px;
-}
-
-/* 头像 */
-.avatar-section {
+/* =================================================================
+   📱 手机端适配 (默认)
+   ================================================================= */
+.page-container {
+  /* 关键：占据全屏 */
+  height: 100vh;
+  width: 100%;
+  display: flex; flex-direction: column;
+  background: #f8fafc;
   position: relative;
-  margin-bottom: 15px;
+  overflow: hidden; /* 防止页面整体滚动，交给 scroll-view */
 }
 
-.avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* 1. 动态背景 */
+.ambient-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.noise-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+.blob { position: absolute; filter: blur(80px); opacity: 0.6; animation: float 10s infinite alternate; }
+.blob-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: #c4b5fd; }
+.blob-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #a5f3fc; animation-delay: -2s; }
+.blob-3 { top: 40%; left: 30%; width: 40vw; height: 40vw; background: #fecaca; opacity: 0.4; animation-delay: -4s; }
+@keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 40px); } }
+
+/* 2. 滚动区域设置 */
+.scroll-body {
+  flex: 1; 
+  height: 0; /* 关键：让 flex 生效 */
+  width: 100%;
+  position: relative; z-index: 1;
 }
 
-.camera-icon {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: #007aff;
-  color: #fff;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 22px;
-  font-size: 12px;
-  border: 2px solid #fff;
-}
-
-/* 信息 */
-.info-section {
-  text-align: center;
+/* 垫片：解决顶部刘海遮挡 */
+.status-bar-spacer {
+  /* 获取系统状态栏高度，如果没有则默认为 20px */
+  height: var(--status-bar-height, 20px);
   width: 100%;
 }
 
-.nickname {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.tags-row {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 5px;
-}
-
-.identity-tag {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: #f0f0f0;
-  color: #666;
-}
-
-.identity-tag.student {
-  background: #e3f2fd;
-  color: #007aff;
-}
-
-.identity-tag.agent {
-  background: #fff3e0;
-  color: #ff9800;
-}
-
-.level-tag {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: #fff9c4;
-  color: #fbc02d;
-  font-weight: bold;
-}
-
-.bio {
-  font-size: 12px;
-  color: #ccc;
-  margin-top: 5px;
-  display: block;
-}
-
-/* ⭐ 声望条 */
-.reputation-bar-box {
+/* 垫片：解决底部遮挡 */
+.bottom-safe-spacer {
+  /* 适配 iPhone X 等底部横条 */
+  height: calc(40px + env(safe-area-inset-bottom));
   width: 100%;
-  margin: 20px 0;
-  background: #fafafa;
-  padding: 10px;
-  border-radius: 8px;
 }
 
-.rep-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: bold;
+/* 3. 个人信息卡片 */
+.profile-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 24px; padding: 24px;
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+  margin: 0 20px 20px; /* 左右留边距 */
 }
 
-.rep-val {
-  color: #ff9800;
-}
+.card-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.card-title { font-size: 14px; font-weight: 800; color: rgba(0,0,0,0.3); text-transform: uppercase; letter-spacing: 1px; }
+.setting-btn { font-size: 18px; opacity: 0.6; }
 
-.progress-bg {
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
+.user-main { display: flex; align-items: center; margin-bottom: 24px; }
+.avatar-box { position: relative; margin-right: 16px; }
+.avatar { width: 72px; height: 72px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.edit-badge { position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; background: var(--primary); color: #fff; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ffc107, #ff9800);
-  border-radius: 3px;
-  transition: width 0.5s;
-}
+.info-box { flex: 1; }
+.name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.nickname { font-size: 20px; font-weight: 800; color: var(--text-main); }
+.id-tag { font-size: 10px; color: #94a3b8; background: rgba(255,255,255,0.5); padding: 1px 6px; border-radius: 4px; }
 
-.rep-tip {
-  font-size: 10px;
-  color: #999;
-  text-align: center;
-  display: block;
-}
+.tags-row { display: flex; gap: 6px; }
+.tag-pill { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+.tag-pill.identity { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+.tag-pill.level { background: rgba(251, 191, 36, 0.15); color: #d97706; }
 
-/* 统计 */
-.stats-row {
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
-  margin-top: 5px;
-}
+/* 声望条 */
+.rep-section { background: rgba(255,255,255,0.5); border-radius: 16px; padding: 12px 16px; margin-bottom: 20px; }
+.rep-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.rep-label { font-size: 12px; font-weight: 700; color: #64748b; }
+.rep-val { font-size: 14px; font-weight: 800; color: #f59e0b; }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+.progress-track { height: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 6px; position: relative; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, #fcd34d, #f59e0b); border-radius: 4px; position: relative; transition: width 0.5s ease-out; }
+.shine { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shine 2s infinite; }
+@keyframes shine { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.rep-desc { font-size: 10px; color: #94a3b8; }
 
-.num {
-  font-weight: bold;
-  font-size: 16px;
-  color: #333;
-}
+/* 数据统计 */
+.stats-grid { display: flex; justify-content: space-around; align-items: center; }
+.stat-item { display: flex; flex-direction: column; align-items: center; }
+.stat-num { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+.stat-label { font-size: 11px; color: #94a3b8; }
+.stat-divider { width: 1px; height: 20px; background: rgba(0,0,0,0.05); }
 
-.label {
-  font-size: 12px;
-  color: #999;
-  margin-top: 2px;
-}
+/* 4. 菜单卡片 */
+.menu-card { background: #fff; border-radius: 20px; padding: 20px; margin: 0 20px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+.menu-header { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; }
 
-/* 2. 菜单 */
-.menu-list {
-  background: #fff;
-  border-radius: 12px;
-  padding: 0 20px;
-  margin-bottom: 15px;
-}
+/* 管理员按钮 */
+.admin-grid { display: flex; gap: 12px; }
+.admin-btn { flex: 1; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; color: #fff; }
+.admin-btn.blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+.admin-btn.purple { background: linear-gradient(135deg, #a78bfa, #8b5cf6); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+.btn-icon { font-size: 16px; }
 
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 0;
-  font-size: 15px;
-  color: #333;
-}
+/* 发布列表 */
+.post-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed rgba(0,0,0,0.05); }
+.post-item:last-child { border-bottom: none; }
+.post-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+.post-icon { font-size: 18px; background: #f1f5f9; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.post-info { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.post-title { font-size: 14px; font-weight: 600; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-date { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.post-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.post-stat { font-size: 10px; color: #94a3b8; }
 
-.arrow {
-  color: #ccc;
-}
+.empty-state { text-align: center; padding: 20px 0; color: #cbd5e1; font-size: 13px; display: flex; flex-direction: column; align-items: center; }
+.empty-icon { font-size: 24px; margin-bottom: 6px; opacity: 0.5; }
 
-/* 3. 历史记录 */
-.history-section {
-  background: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  min-height: 200px;
+/* 5. 退出按钮 */
+.logout-btn-box { padding: 0 20px; }
+.logout-btn {
+  background: #fff; border: 1px solid #fee2e2; color: #ef4444; font-size: 14px; font-weight: 600;
+  border-radius: 16px; height: 44px; line-height: 44px; margin-top: 10px;
 }
+.logout-btn:active { background: #fef2f2; }
 
-.section-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 15px;
-  padding-left: 10px;
-  border-left: 4px solid #007aff;
-}
+/* =================================================================
+   💻 PC 端适配 (Media Query)
+   ================================================================= */
+@media screen and (min-width: 800px) {
+  /* 1. 容器重置：启用页面级滚动，而非 scroll-view */
+  .page-container {
+    overflow-y: auto; /* 页面滚动 */
+    display: block;   /* 取消 flex */
+    height: 100vh;
+  }
 
-.post-item {
-  padding: 12px 0;
-  border-bottom: 1px solid #f5f5f5;
-}
+  /* 2. 滚动区域变容器 */
+  .scroll-body {
+    display: block; 
+    height: auto; 
+    overflow: visible;
+    padding-bottom: 60px;
+  }
+  
+  /* 3. 内容居中 */
+  .profile-card, .menu-card, .logout-btn-box {
+    width: 600px; 
+    margin-left: auto; 
+    margin-right: auto;
+  }
 
-.post-title {
-  font-size: 15px;
-  color: #333;
-  margin-bottom: 6px;
-  display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.post-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #999;
-}
-
-.empty-box {
-  text-align: center;
-  padding: 40px 0;
-  color: #ccc;
-  font-size: 13px;
+  /* PC端去掉顶部的占位 */
+  .status-bar-spacer { display: none; }
+  
+  /* PC端顶部增加边距 */
+  .profile-card { margin-top: 40px; }
 }
 </style>

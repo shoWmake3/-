@@ -1,14 +1,42 @@
 <template>
   <div class="container">
-    <!-- 顶部导航栏：升级为毛玻璃效果 -->
+    <div class="ambient-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="noise-overlay"></div>
+    </div>
+
     <div class="nav-bar">
-      <div class="search-box">
-        <text class="search-icon">🔍</text>
-        <input class="search-input" v-model="keyword" placeholder="搜百科、找攻略..." confirm-type="search"
-          @confirm="doSearch" />
+      <!-- 移动端：只在PC端显示品牌Logo -->
+      <div class="nav-left">
+        <div class="web-brand">
+          <text class="brand-text">皆の知り</text>
+        </div>
       </div>
-      <div class="add-btn-icon" @click="goToPublish">
-        <text class="plus-icon">+</text>
+      
+      <!-- 移动端：搜索框靠左 -->
+      <div class="search-box mobile-search">
+        <text class="search-icon">🔍</text>
+        <input class="search-input" v-model="keyword" placeholder="搜百科、找攻略、看世界..." confirm-type="search"
+          placeholder-style="color: #64748b; font-weight: 300;" @confirm="doSearch" />
+      </div>
+      
+      <!-- 移动端：发布按钮靠右 -->
+      <div class="add-btn-wrapper" @click="goToPublish">
+        <div class="add-btn-icon">
+          <div class="plus-icon-container">
+            <text class="plus-icon">+</text>
+          </div>
+        </div>
+        <div class="pulse-ring"></div>
+      </div>
+    </div>
+
+    <div class="web-hero-section">
+      <div class="hero-content">
+        <text class="hero-title">探索未知 <br> <span class="gradient-text">连接你的日本新生活</span> <br> </text>
+        <text class="hero-sub">Discover the unseen, Share the unexpected.</text>
       </div>
     </div>
 
@@ -28,55 +56,60 @@
               <view class="play-icon">▶</view>
             </view>
             
-            <!-- 渐变遮罩，增加文字可读性 -->
-            <view class="image-overlay"></view>
+            <view class="shine-effect"></view>
           </view>
 
           <div class="card-content">
             <text class="card-title">{{ item.displayTitle }}</text>
 
             <div class="card-footer">
-              <div class="author-box">
-                <image class="mini-avatar" :src="item.authorAvatar || '/static/logo.png'" mode="aspectFill"></image>
-
-                <div class="name-col">
+              <div class="author-info">
+                <view class="avatar-border">
+                  <image class="mini-avatar" :src="item.authorAvatar || '/static/logo.png'" mode="aspectFill"></image>
+                </view>
+                <div class="name-box">
                   <text class="mini-name">{{ item.authorName }}</text>
-                  <view class="badge-tag" v-if="item.authorReputation >= 100">
-                    <text class="badge-icon">{{ getBadgeIcon(item.authorReputation) }}</text>
-                    <text class="badge-text">信誉 {{ item.authorReputation }}</text>
+                  <view class="reputation-pill" v-if="item.authorReputation >= 100">
+                    <text class="rep-icon">👑</text>
+                    <text class="rep-text">Lv.{{ Math.floor(item.authorReputation / 100) }}</text>
                   </view>
                 </div>
               </div>
-              
-              <div class="like-box" @click.stop="handleLike(item)" :class="{ 'liked': item.isLiked }">
-                <view class="heart-icon">
-                  <text>{{ item.isLiked ? '❤️' : '🤍' }}</text>
+
+              <div class="like-wrapper" @click.stop="handleLike(item)">
+                <view class="heart-anim" :class="{ 'is-active': item.isLiked }">
+                  <text class="icon">{{ item.isLiked ? '❤️' : '🤍' }}</text>
                 </view>
-                <text class="like-num">{{ formatNumber(item.likeCount) }}</text>
+                <text class="like-count" :class="{ 'active-text': item.isLiked }">
+                  {{ formatNumber(item.likeCount) || '赞' }}
+                </text>
               </div>
             </div>
 
-            <div class="trans-btn" @click.stop="handleTranslate(item)" :class="{ 'translated': item.isTranslated }">
-              <text class="trans-icon">🌐</text>
-              <text class="trans-text">{{ item.isTranslated ? '显示原文' : '智能翻译' }}</text>
+            <div class="action-row">
+              <div class="glass-pill" @click.stop="handleTranslate(item)" :class="{ 'active': item.isTranslated }">
+                <text class="trans-icon">🌐</text>
+                <text>{{ item.isTranslated ? '原文' : ' 翻译' }}</text>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div v-if="postList.length === 0" class="empty-state">
-        <view class="empty-icon">📭</view>
-        <text class="empty-text">探索世界中...</text>
+        <div class="empty-circle">
+          <view class="empty-emoji">🎌</view>
+        </div>
+        <text class="empty-title">开启你的探索之旅</text>
       </div>
-      
-      <!-- 底部加载状态 -->
+
       <view v-if="postList.length > 0" class="loading-footer">
-        <view class="loading-dot"></view>
-        <view class="loading-dot"></view>
-        <view class="loading-dot"></view>
+        <view class="wave-dot"></view>
+        <view class="wave-dot"></view>
+        <view class="wave-dot"></view>
       </view>
-      
-      <div style="height: 40px;"></div>
+
+      <div style="height: 60px;"></div>
     </scroll-view>
   </div>
 </template>
@@ -134,28 +167,33 @@ const fetchPosts = () => {
   });
 };
 
-// 数字格式化（如 1.2k）
 const formatNumber = (num) => {
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k';
-  }
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
   return num;
 };
 
-// 获取封面图逻辑
-const getCoverImage = (item) => {
-  if (!item.mediaUrls || item.mediaUrls === '[]') {
-    return '/static/logo.png';
-  }
-  try {
-    const urls = JSON.parse(item.mediaUrls);
-    if (Array.isArray(urls) && urls.length > 0) {
+const getCoverMedia = (item) => {
+  if (item.mediaUrls && item.mediaUrls !== '[]') {
+    try {
+      const urls = JSON.parse(item.mediaUrls);
       return urls[0];
-    }
-  } catch (e) {
-    return '/static/logo.png';
+    } catch (e) { return '/static/logo.png'; }
   }
   return '/static/logo.png';
+};
+
+const getThumbnail = (item) => {
+  if (item.mediaUrls && item.mediaUrls !== '[]') {
+    try {
+      const urls = JSON.parse(item.mediaUrls);
+      const img = urls.find(url => {
+        const u = url.toLowerCase();
+        return u.endsWith('.jpg') || u.endsWith('.png') || u.endsWith('.jpeg') || u.endsWith('.webp');
+      });
+      return img || '';
+    } catch (e) { return ''; }
+  }
+  return '';
 };
 
 const handleTranslate = (item) => {
@@ -224,557 +262,429 @@ const goToPublish = () => {
   if (!token) { return uni.navigateTo({ url: '/pages/login/login' }); }
   uni.navigateTo({ url: '/pages/publish/publish' });
 };
-
-const isVideo = (url) => {
-  if (!url) return false;
-  const lower = url.toLowerCase();
-  return lower.endsWith('.mp4') || lower.endsWith('.mov') || lower.endsWith('.webm') || lower.endsWith('.avi');
-};
-
-const getCoverMedia = (item) => {
-  if (item.mediaUrls && item.mediaUrls !== '[]') {
-    try {
-      const urls = JSON.parse(item.mediaUrls);
-      return urls[0];
-    } catch (e) { return '/static/logo.png'; }
-  }
-  return '/static/logo.png';
-};
-
-const getThumbnail = (item) => {
-  if (item.mediaUrls && item.mediaUrls !== '[]') {
-    try {
-      const urls = JSON.parse(item.mediaUrls);
-      const img = urls.find(url => {
-        const u = url.toLowerCase();
-        return u.endsWith('.jpg') || u.endsWith('.png') || u.endsWith('.jpeg') || u.endsWith('.webp');
-      });
-      return img || '';
-    } catch (e) { return ''; }
-  }
-  return '';
-};
-
-const handleImgError = (e) => {
-  console.error("图片加载失败", e);
-};
-
-const getBadgeIcon = (score) => {
-  score = score || 0;
-  if (score < 0) return '⚠️';
-  if (score < 100) return '';
-  if (score < 300) return '🎓';
-  return '👑';
-};
+const handleImgError = () => {};
+const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
 </script>
 
 <style>
-/* CSS 变量定义：便于主题统一管理 */
 :root {
-  --primary-color: #6366f1;
-  --primary-light: #818cf8;
-  --bg-color: #f8fafc;
-  --card-bg: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-radius: 16px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --primary: #6366f1;
+  --bg-page: #f8fafc;
+  --text-main: #1e293b;
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
 }
 
 .container {
-  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  position: relative;
+  background: var(--bg-page);
+  font-family: -apple-system, sans-serif;
+  overflow-x: hidden;
 }
 
-/* 顶部导航栏 - 毛玻璃效果 */
+/* --- 1. 动态流体背景 & 噪点 --- */
+.ambient-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #f1f5f9;
+}
+
+.noise-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.blob {
+  position: absolute;
+  filter: blur(90px);
+  opacity: 0.7;
+  animation: float 12s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #c4b5fd; animation-delay: 0s; }
+.blob-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #a5f3fc; animation-delay: -3s; animation-duration: 15s; }
+.blob-3 { top: 40%; left: 30%; width: 40vw; height: 40vw; background: #fecaca; opacity: 0.5; animation-delay: -5s; }
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 60px) scale(1.1); }
+}
+
+/* --- 2. 导航栏 --- */
 .nav-bar {
+  position: sticky;
+  top: 0; z-index: 100;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between; /* 移动端：两边对齐 */
   padding: 50px 20px 15px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.2); 
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  position: sticky;
-  top: 0;
-  z-index: 99;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--glass-border);
 }
 
-.search-box {
-  flex: 1;
-  background: rgba(241, 245, 249, 0.8);
-  height: 42px;
-  border-radius: 21px;
+/* 移动端：隐藏左侧品牌Logo容器 */
+.nav-left {
+  display: none;
+}
+
+.web-hero-section { display: none; }
+
+/* 移动端搜索框样式 */
+.mobile-search {
+  flex: 1; /* 占据剩余空间 */
+  height: 44px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50px;
+  display: flex; 
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  margin-right: 12px; /* 与右边按钮保持间距 */
+}
+
+.mobile-search:focus-within {
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px) scale(1.01);
+  border-color: #fff;
+}
+
+.search-icon { opacity: 0.5; margin-right: 8px; }
+.search-input { flex: 1; font-size: 14px; color: #1e293b; }
+
+/* 发布按钮 & 呼吸光环 */
+.add-btn-wrapper { 
+  position: relative; 
+  width: 44px; 
+  height: 44px; 
+  flex-shrink: 0; /* 防止按钮被压缩 */
+}
+
+.add-btn-icon {
+  width: 100%; 
+  height: 100%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  color: #fff; 
+  font-size: 26px; 
+  font-weight: 300;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+  position: relative; 
+  z-index: 2;
+  transition: transform 0.2s;
+}
+
+/* 新增：加号容器，确保加号居中 */
+.plus-icon-container {
   display: flex;
   align-items: center;
-  padding: 0 18px;
-  margin-right: 15px;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  transition: all 0.3s ease;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
-.search-box:focus-within {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+/* 优化加号位置 */
+.plus-icon {
+  display: block;
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
   transform: translateY(-1px);
 }
 
-.search-icon {
-  font-size: 16px;
-  margin-right: 8px;
-  color: #94a3b8;
-  transition: color 0.3s;
-}
+.add-btn-wrapper:active .add-btn-icon { transform: scale(0.92); }
 
-.search-box:focus-within .search-icon {
-  color: var(--primary-color);
-}
-
-.search-input {
-  flex: 1;
-  font-size: 15px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.search-input::placeholder {
-  color: #94a3b8;
-  font-weight: 400;
-}
-
-/* 发布按钮 - 悬浮操作按钮样式 */
-.add-btn-icon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+.pulse-ring {
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.add-btn-icon::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.add-btn-icon:active {
-  transform: scale(0.92);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.add-btn-icon:hover::before {
-  opacity: 1;
-}
-
-.plus-icon {
-  font-weight: 300;
+  border: 2px solid rgba(99, 102, 241, 0.5);
+  animation: pulse 2s infinite;
   z-index: 1;
 }
 
-/* 瀑布流容器 */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* --- 3. 瀑布流 --- */
 .waterfall-container {
-  padding: 12px;
   height: calc(100vh - 110px);
+  padding: 12px;
   box-sizing: border-box;
+  position: relative; z-index: 1;
 }
 
-.waterfall-column {
-  column-count: 2;
-  column-gap: 12px;
-  max-width: 100%;
-  margin: 0 auto;
-}
+.waterfall-column { column-count: 2; column-gap: 12px; }
 
-/* 卡片样式 - 现代悬浮效果 */
 .post-card {
   break-inside: avoid;
-  background: var(--card-bg);
-  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
   margin-bottom: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.6s ease-out backwards;
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-top: 1px solid rgba(255,255,255,0.9);
+  
+  transform: translateZ(0);
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.post-card:active {
-  transform: scale(0.98) translateY(2px);
-  box-shadow: var(--shadow-sm);
-}
+.card-cover-wrapper { position: relative; overflow: hidden; background: #e2e8f0; }
+.card-cover { width: 100%; display: block; min-height: 150px; opacity: 1; transition: opacity 0.3s; }
 
-/* 图片容器 */
-.card-cover-wrapper {
-  position: relative;
-  width: 100%;
-  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-  overflow: hidden;
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
-}
-
-.card-cover {
-  width: 100%;
-  display: block;
-  min-height: 200px;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.post-card:hover .card-cover {
-  transform: scale(1.05);
-}
-
-/* 图片渐变遮罩 */
-.image-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.post-card:hover .image-overlay {
-  opacity: 1;
-}
-
-/* 视频徽章 */
+/* 视频角标 */
 .video-badge {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.6);
+  position: absolute; top: 10px; right: 10px;
+  width: 28px; height: 28px;
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  width: 48px;
-  height: 48px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.play-icon { color: #fff; font-size: 10px; margin-left: 2px; }
+
+/* 悬停光扫过 */
+.shine-effect {
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+  transform: skewX(-25deg);
+  transition: 0.6s; pointer-events: none;
 }
 
-.play-icon {
-  color: white;
-  font-size: 16px;
-  margin-left: 4px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-/* 卡片内容区 */
-.card-content {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.card-content { padding: 14px; }
 
 .card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  letter-spacing: -0.01em;
+  font-size: 15px; font-weight: 700; color: #1e293b;
+  margin-bottom: 12px; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  letter-spacing: -0.2px;
 }
 
-/* 底部信息栏 */
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-}
+.card-footer { display: flex; justify-content: space-between; align-items: center; }
 
-.author-box {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  overflow: hidden;
-  gap: 8px;
-}
+.author-info { display: flex; align-items: center; gap: 8px; }
+.avatar-border { padding: 1px; background: #fff; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.mini-avatar { width: 24px; height: 24px; border-radius: 50%; display: block; }
+.name-box { display: flex; flex-direction: column; }
+.mini-name { font-size: 12px; font-weight: 600; color: #475569; max-width: 80px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
+.reputation-pill { display: flex; align-items: center; gap: 2px; margin-top: 2px; }
+.rep-icon { font-size: 8px; }
+.rep-text { font-size: 9px; font-weight: 700; color: #d97706; background: rgba(251, 191, 36, 0.15); padding: 0 4px; border-radius: 4px; }
 
-.mini-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.3s;
-}
+.like-wrapper { display: flex; align-items: center; gap: 4px; background: rgba(241,245,249,0.5); padding: 4px 8px; border-radius: 12px; }
+.like-count { font-size: 11px; font-weight: 600; color: #94a3b8; }
+.like-count.active-text { color: #ef4444; }
 
-.post-card:hover .mini-avatar {
-  transform: scale(1.1);
+.action-row { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.05); }
+.glass-pill {
+  font-size: 10px; font-weight: 600; color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
+  padding: 4px 10px; border-radius: 20px;
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  transition: all 0.2s;
 }
-
-.name-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  overflow: hidden;
-}
-
-.mini-name {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 信誉徽章 */
-.badge-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  color: #d97706;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-weight: 700;
-  width: fit-content;
-  border: 1px solid rgba(217, 119, 6, 0.2);
-}
-
-.badge-icon {
-  font-size: 10px;
-}
-
-.badge-text {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-/* 点赞按钮 */
-.like-box {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: rgba(241, 245, 249, 0.6);
-  border-radius: 20px;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.like-box:active {
-  transform: scale(0.9);
-}
-
-.like-box.liked {
-  background: rgba(254, 226, 226, 0.6);
-}
-
-.heart-icon {
-  font-size: 14px;
-  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.like-box.liked .heart-icon {
-  transform: scale(1.2);
-}
-
-.like-num {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 600;
-  min-width: 20px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.like-box.liked .like-num {
-  color: #ef4444;
-}
-
-/* 翻译按钮 */
-.trans-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  background: rgba(238, 242, 255, 0.8);
-  color: var(--primary-color);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  transition: all 0.3s;
-  width: fit-content;
-  cursor: pointer;
-}
-
-.trans-btn.translated {
-  background: rgba(236, 253, 245, 0.8);
-  color: #059669;
-  border-color: rgba(5, 150, 105, 0.2);
-}
-
-.trans-btn:active {
-  transform: scale(0.95);
-}
-
-.trans-icon {
-  font-size: 12px;
-}
+.glass-pill.active { background: #6366f1; color: #fff; border-color: #6366f1; }
 
 /* 空状态 */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-  animation: fadeIn 0.5s ease;
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: 100px; opacity: 0.8;
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.empty-circle {
+  width: 80px; height: 80px; background: #fff; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
 }
+.empty-emoji { font-size: 36px; }
+.empty-title { color: #64748b; font-size: 15px; font-weight: 500; letter-spacing: 1px; }
 
-.empty-icon {
-  font-size: 64px;
-  opacity: 0.6;
-  filter: grayscale(0.3);
-}
+.loading-footer { display: flex; justify-content: center; gap: 8px; padding: 24px; }
+.wave-dot { width: 8px; height: 8px; background: #cbd5e1; border-radius: 50%; animation: wave 1.4s infinite ease-in-out; }
+.wave-dot:nth-child(2) { animation-delay: 0.2s; }
+.wave-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes wave { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(-8px); opacity: 1; } }
 
-.empty-text {
-  color: var(--text-secondary);
-  font-size: 15px;
-  font-weight: 500;
-}
-
-/* 底部加载动画 */
-.loading-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  padding: 20px;
-  height: 60px;
-}
-
-.loading-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out both;
-  opacity: 0.6;
-}
-
-.loading-dot:nth-child(1) { animation-delay: -0.32s; }
-.loading-dot:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
-}
-
-/* PC 端适配 */
+/* --- 💻 PC/Web 端专属适配 (Media Query) --- */
 @media screen and (min-width: 800px) {
-  .waterfall-column {
-    column-count: 3;
-    column-gap: 20px;
-    max-width: 1200px;
-    padding: 0 20px;
+  .nav-bar { 
+    padding: 20px 60px; 
+    background: rgba(255, 255, 255, 0.6); 
+  }
+
+  /* PC端：显示左侧品牌Logo容器 */
+  .nav-left {
+    display: flex;
+    flex: 1;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  /* PC端：显示品牌Logo */
+  .web-brand { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+  }
+  
+  .brand-text { 
+    font-size: 26px; 
+    font-weight: 900; 
+    color: #0f172a; 
+    letter-spacing: -1px; 
+  }
+
+  /* PC端：隐藏移动端搜索框类，使用新的布局 */
+  .mobile-search {
+    display: none;
+  }
+
+  /* PC端：重新创建三栏布局 */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  /* PC端：创建新的搜索框容器 */
+  .search-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 2;
+  }
+  
+  .search-box:not(.mobile-search) {
+    max-width: 600px; 
+    height: 52px; 
+    background: #fff; 
+    box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+    border-radius: 50px;
+    padding: 0 16px;
+    border: 1px solid rgba(255,255,255,0.8);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  .search-box:not(.mobile-search):focus-within {
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+    transform: translateY(-1px) scale(1.01);
+    border-color: #fff;
+  }
+
+  /* Hero 区域：极光文字 */
+  .web-hero-section {
+    display: flex; 
+    justify-content: center;
+    padding: 100px 20px 80px;
+    position: relative; 
+    z-index: 1;
+    text-align: center;
+  }
+  
+  .hero-title {
+    font-size: 56px; 
+    font-weight: 900; 
+    color: #0f172a; 
+    line-height: 1.1; 
+    margin-bottom: 20px; 
+    letter-spacing: -2px;
+    animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  
+  /* 渐变文字特效 */
+  .gradient-text {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .hero-sub { 
+    font-size: 18px; 
+    color: #64748b; 
+    font-weight: 400; 
+    max-width: 600px; 
+    line-height: 1.6; 
+  }
+
+  /* PC 瀑布流布局 */
+  .waterfall-container { 
+    height: auto; 
+    max-width: 1280px; 
+    margin: 0 auto; 
+    overflow: visible; 
+  }
+  
+  .waterfall-column { 
+    column-count: 4; 
+    column-gap: 24px; 
   }
 
   .post-card {
-    margin-bottom: 20px;
-    border-radius: 20px;
+    background: #fff; 
+    margin-bottom: 24px; 
+    border-radius: 24px; 
+    cursor: pointer;
+    border: none; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   
-  .post-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+  /* PC 悬停磁吸效果 */
+  .post-card:hover { 
+    transform: translateY(-12px); 
+    box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25); 
+  }
+  
+  .post-card:hover .shine-effect { 
+    left: 100%; 
   }
 
-  .nav-bar {
-    padding: 20px 40px;
-    justify-content: center;
-    gap: 20px;
+  .waterfall-container div[style*="height: 60px"] { 
+    display: none; 
   }
-
-  .search-box {
-    max-width: 600px;
-    height: 48px;
-    border-radius: 24px;
+  
+  /* PC端加号微调 */
+  .add-btn-wrapper {
+    width: 52px;
+    height: 52px;
   }
   
   .add-btn-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 28px;
-  }
-}
-
-/* 超小屏适配 */
-@media screen and (max-width: 375px) {
-  .waterfall-column {
-    column-count: 2;
-    column-gap: 8px;
+    font-size: 30px;
   }
   
-  .post-card {
-    margin-bottom: 8px;
-    border-radius: 12px;
-  }
-  
-  .card-content {
-    padding: 10px;
-  }
-  
-  .card-title {
-    font-size: 13px;
+  .plus-icon {
+    font-size: 30px;
+    transform: translateY(-1px);
   }
 }
 </style>
