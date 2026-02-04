@@ -214,20 +214,27 @@ const handleConvertToWiki = () => {
         header: { 'Authorization': token, 'Content-Type': 'application/x-www-form-urlencoded' },
         data: { postId: post.value.id, category: selectedCat },
         success: (apiRes) => {
-            uni.hideLoading();
-            if (apiRes.statusCode === 200) {
-                uni.showToast({ title: '收录成功', icon: 'success' });
-                setTimeout(() => {
-                    uni.showModal({
-                        title: '📚 知识库更新',
-                        content: '该内容已成功收录至维基百科，是否立即查看？',
-                        success: (modalRes) => {
-                            if (modalRes.confirm) uni.navigateTo({ url: '/pages/wiki/wiki' });
-                        }
-                    });
-                }, 1000);
-            } else { uni.showToast({ title: '收录失败', icon: 'none' }); }
-        },
+    uni.hideLoading();
+    if (apiRes.statusCode === 200) {
+        uni.showToast({ title: '收录成功', icon: 'success' });
+        setTimeout(() => {
+            uni.showModal({
+                title: '📚 知识库更新',
+                content: '等待审核后，您的内容将被收录至维基百科，供更多用户查阅。',
+                success: (modalRes) => {
+                    if (modalRes.confirm) {
+                        // ⭐ 关键修复：将 navigateTo 改为 switchTab
+                        uni.switchTab({ 
+                            url: '/pages/wiki/wiki' 
+                        });
+                    }
+                }
+            });
+        }, 1000);
+    } else { 
+        uni.showToast({ title: '收录失败', icon: 'none' }); 
+    }
+},
         fail: () => { uni.hideLoading(); uni.showToast({ title: '网络错误', icon: 'none' }); }
       });
     }

@@ -356,7 +356,7 @@ const formatTime = (t) => t ? t.replace('T', ' ').substring(0, 16) : '';
 }
 .btn:active { transform: scale(0.95); }
 
-.pass-btn { background: var(--success); color: #fff; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
+.pass-btn { background: var(--success); color: #0c0202; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
 .reject-btn { background: #fff; border: 1px solid #cbd5e1; color: #64748b; }
 .ban-btn { background: #1e293b; color: #fff; } /* 黑色封禁按钮 */
 
