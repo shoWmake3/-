@@ -72,6 +72,15 @@
 			"style": {
 				"navigationBarTitleText": "运营大屏"
 			}
+		},
+		{
+			"path": "pages/wiki/wiki-detail",
+			"style": {
+				"navigationStyle": "custom",
+				"app-plus": {
+					"titleNView": false
+				}
+			}
 		}
 	],
 	"globalStyle": {

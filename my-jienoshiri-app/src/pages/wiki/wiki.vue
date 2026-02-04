@@ -113,16 +113,10 @@ const doSearch = () => { fetchList(); };
 const filterByCat = (name) => { keyword.value = name; fetchList(); };
 
 const goToDetail = (item) => {
-  // 如果想跳转到 post-detail 复用详情页
-  // uni.navigateTo({ url: `/pages/post-detail/post-detail?id=${item.sourcePostId}` });
-  
-  // 或者简单的弹窗展示
-  uni.showModal({
-    title: '📖 ' + item.title,
-    content: item.content,
-    showCancel: false,
-    confirmText: '关闭',
-    confirmColor: '#6366f1'
+  // 将整个 item 存入缓存，方便详情页读取（避免 URL 传参过长）
+  uni.setStorageSync('currentWiki', item);
+  uni.navigateTo({
+    url: '/pages/wiki/wiki-detail'
   });
 };
 </script>
