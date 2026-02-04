@@ -484,7 +484,7 @@ const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
 .card-title {
   font-size: 15px; font-weight: 700; color: #1e293b;
   margin-bottom: 12px; line-height: 1.5;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
   letter-spacing: -0.2px;
 }
 
@@ -623,6 +623,7 @@ const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
   /* 渐变文字特效 */
   .gradient-text {
     background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+    background-clip: text;
     -webkit-background-clip: text; 
     -webkit-text-fill-color: transparent;
   }

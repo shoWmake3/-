@@ -229,7 +229,17 @@ const goToDetail = (item) => {
 .wiki-title-row { display: flex; align-items: center; margin-bottom: 8px; }
 .wiki-icon { margin-right: 8px; font-size: 16px; }
 .wiki-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
-.wiki-summary { font-size: 13px; color: var(--text-sub); line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wiki-summary { 
+  font-size: 13px; 
+  color: var(--text-sub); 
+  line-height: 1.6; 
+  margin-bottom: 12px; 
+  display: -webkit-box; 
+  -webkit-line-clamp: 2; 
+  line-clamp: 2; 
+  -webkit-box-orient: vertical; 
+  overflow: hidden; 
+}
 
 .wiki-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 8px; }
 .tag-pill { font-size: 11px; color: var(--primary); background: rgba(99, 102, 241, 0.08); padding: 2px 8px; border-radius: 6px; font-weight: 600; }

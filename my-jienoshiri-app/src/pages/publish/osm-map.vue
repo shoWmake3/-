@@ -220,7 +220,11 @@ export default {
   font-size: 16px; font-weight: 700; color: #1e293b; 
   line-height: 1.4; display: block; 
   /* 多行截断 */
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box; 
+  -webkit-line-clamp: 2; 
+  line-clamp: 2;
+  -webkit-box-orient: vertical; 
+  overflow: hidden;
 }
 .address.placeholder { color: #cbd5e1; font-weight: 400; }
 .coords { font-size: 11px; color: #6366f1; margin-top: 4px; display: block; font-family: monospace; }

@@ -256,7 +256,7 @@ const formatTime = (t) => {
 .top-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .title { font-size: 15px; font-weight: 700; color: var(--text-main); }
 .time { font-size: 11px; color: #94a3b8; }
-.desc { font-size: 13px; color: var(--text-sub); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.desc { font-size: 13px; color: var(--text-sub); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 .unread-dot {
   position: absolute; top: 16px; right: 16px;
