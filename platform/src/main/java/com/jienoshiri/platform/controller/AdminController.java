@@ -218,7 +218,13 @@ public class AdminController {
     @GetMapping("/config/list")
     public List<com.jienoshiri.platform.entity.SysConfig> getConfigList(@RequestHeader("Authorization") String token) {
         checkAdmin(token);
-        return sysConfigMapper.selectList(null);
+        List<com.jienoshiri.platform.entity.SysConfig> configList = sysConfigMapper.selectList(null);
+        for (com.jienoshiri.platform.entity.SysConfig config : configList) {
+            if ("weight_wiki".equals(config.getParamKey())) {
+                config.setDescription("已转Wiki帖子(status=3)加权");
+            }
+        }
+        return configList;
     }
 
     @PostMapping("/config/update")

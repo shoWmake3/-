@@ -150,7 +150,7 @@ public class PostService {
 
         // 1. 查所有帖子
         QueryWrapper<Post> query = new QueryWrapper<>();
-        // 仅展示允许公开的帖子：1=正常, 3=已转Wiki
+        // 查状态为 1(正常) 与 3(已转Wiki) 的帖子，配合 weight_wiki 的加权逻辑
         query.in("status", 1, 3);
         if (keyword != null && !keyword.trim().isEmpty()) {
             query.and(w -> w.like("title", keyword).or().like("content", keyword));
