@@ -1,6 +1,6 @@
 package com.jienoshiri.platform.config;
 
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -28,9 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = request.getHeader("Authorization");
 
         // 2. 如果有 Token 且有效
-        if (token != null && jwtUtil.validateToken(token)) {
+        if (tokenResolver.validate(token)) {
             // 3. 解析出用户名
-            String username = jwtUtil.getUsername(token);
+            String username = tokenResolver.getUsername(token);
 
             // 4. 生成 Spring Security 认可的认证对象 (这里暂时给空权限 list)
             UsernamePasswordAuthenticationToken authentication =

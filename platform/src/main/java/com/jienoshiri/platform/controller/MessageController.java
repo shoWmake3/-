@@ -7,7 +7,7 @@ import com.jienoshiri.platform.entity.SysUser;
 import com.jienoshiri.platform.mapper.MessageMapper;
 import com.jienoshiri.platform.mapper.NotificationMapper;
 import com.jienoshiri.platform.mapper.UserMapper;
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +28,7 @@ public class MessageController {
     @Autowired
     private UserMapper userMapper;
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     // --- 通知模块 ---
 
@@ -83,7 +83,7 @@ public class MessageController {
 
     // 辅助方法：从 Token 获取用户ID
     private Long getUserIdByToken(String token) {
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
         return user.getId();
     }

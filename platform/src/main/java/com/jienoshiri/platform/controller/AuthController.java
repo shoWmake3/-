@@ -6,7 +6,7 @@ import com.jienoshiri.platform.dto.RegisterDto;
 import com.jienoshiri.platform.entity.SysUser;
 import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.service.AuthService;
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +18,7 @@ public class AuthController {
     private AuthService authService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     @Autowired
     private UserMapper userMapper;
@@ -41,7 +41,7 @@ public class AuthController {
     public SysUser me(@RequestHeader("Authorization") String token) {
         // 1. 从 Token 中解析用户名
         // (前端传来的 Token 如果没有 "Bearer " 前缀，直接解析即可)
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
 
         // 2. 根据用户名查询用户
         QueryWrapper<SysUser> query = new QueryWrapper<>();
