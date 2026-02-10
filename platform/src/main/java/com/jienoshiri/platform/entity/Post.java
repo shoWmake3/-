@@ -31,7 +31,7 @@ public class Post {
     private Integer likeCount;
     private Integer commentCount;
 
-    // 状态: 0待审核, 1正常, 2驳回, 3已转Wiki
+    // 状态: 0待审核, 1正常, 2驳回, 3已转Wiki, 4违规下架/封禁
     private Integer status;
 
     private LocalDateTime createTime;

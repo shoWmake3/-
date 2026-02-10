@@ -150,8 +150,8 @@ public class PostService {
 
         // 1. 查所有帖子
         QueryWrapper<Post> query = new QueryWrapper<>();
-        // 只查状态为 1 (正常) 的帖子
-        query.eq("status", 1);
+        // 仅展示允许公开的帖子：1=正常, 3=已转Wiki
+        query.in("status", 1, 3);
         if (keyword != null && !keyword.trim().isEmpty()) {
             query.and(w -> w.like("title", keyword).or().like("content", keyword));
         }
