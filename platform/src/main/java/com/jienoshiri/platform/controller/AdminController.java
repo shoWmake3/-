@@ -9,7 +9,7 @@ import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.mapper.WikiMapper;
 import com.jienoshiri.platform.mapper.SysConfigMapper; // 👈 追加
 import com.jienoshiri.platform.service.PostService;   // 👈 追加
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +28,7 @@ public class AdminController {
     @Autowired
     private UserMapper userMapper;
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     @Autowired
     private SysConfigMapper sysConfigMapper; // 👈 設定用Mapper
@@ -38,7 +38,7 @@ public class AdminController {
 
     // --- 权限校验辅助方法 ---
     private void checkAdmin(String token) {
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
         if (user == null || !"admin".equals(user.getRole())) {
             throw new RuntimeException("无权访问：需要管理员权限");

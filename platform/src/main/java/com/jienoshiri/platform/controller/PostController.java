@@ -8,7 +8,7 @@ import com.jienoshiri.platform.entity.SysUser;
 import com.jienoshiri.platform.mapper.PostMapper;
 import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.service.PostService;
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class PostController {
     private PostService postService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     @Autowired
     private UserMapper userMapper;
@@ -48,7 +48,7 @@ public class PostController {
         if (token != null && !token.isEmpty()) {
             try {
                 // 解析 Token 拿用户ID (先拿用户名再查ID，或者JWT里直接存ID)
-                String username = jwtUtil.getUsername(token);
+                String username = tokenResolver.getUsername(token);
                 SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
                 if (user != null){
                     userId = user.getId();
@@ -67,7 +67,7 @@ public class PostController {
         // 1. 从 Token 中获取当前用户名
         // Token 格式通常是 "Bearer xxxxx"，这里简单处理直接传 token 字符串
         // 如果你的前端带了 "Bearer " 前缀，需要 substring(7)
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
 
         // 2. 找到用户ID
         QueryWrapper<SysUser> query = new QueryWrapper<>();
@@ -87,7 +87,7 @@ public class PostController {
      */
     @PostMapping("/like")
     public String like(@RequestParam Long postId, @RequestHeader("Authorization") String token) {
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
 
         boolean isLike = postService.toggleLike(postId, user.getId());
@@ -99,7 +99,7 @@ public class PostController {
      */
     @PostMapping("/comment")
     public String addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token) {
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
 
         comment.setUserId(user.getId());
@@ -127,7 +127,7 @@ public class PostController {
      */
     @GetMapping("/my")
     public List<PostVo> getMyPosts(@RequestHeader("Authorization") String token) {
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
 
         // 复用 Service 里的逻辑，或者直接查
