@@ -8,8 +8,10 @@ import com.jienoshiri.platform.mapper.MessageMapper;
 import com.jienoshiri.platform.mapper.NotificationMapper;
 import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.utils.JwtUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,9 +46,13 @@ public class MessageController {
 
     // 标记通知为已读
     @PostMapping("/notification/read/{id}")
-    public String readNotification(@PathVariable Long id) {
+    public String readNotification(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        Long currentUserId = getUserIdByToken(token);
         Notification n = notificationMapper.selectById(id);
         if (n != null) {
+            if (!currentUserId.equals(n.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "无权操作该通知");
+            }
             n.setIsRead(true);
             notificationMapper.updateById(n);
         }
