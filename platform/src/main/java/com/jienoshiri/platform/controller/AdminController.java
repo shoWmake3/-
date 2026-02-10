@@ -12,6 +12,7 @@ import com.jienoshiri.platform.service.PostService;   // 👈 追加
 import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.jienoshiri.platform.utils.JwtUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,9 @@ public class AdminController {
 
     @Autowired
     private PostService postService; // ⭐ 修正: 直接 Service を注入 (SpringContextUtilを使わない)
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // --- 权限校验辅助方法 ---
     private void checkAdmin(String token) {

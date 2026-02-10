@@ -300,7 +300,7 @@ const scrollToBottom = () => {
 /* 自己气泡 */
 .msg-row.self .bubble {
   background: var(--bubble-self);
-  color: #ffffff;
+  color: #050505;
   border-bottom-right-radius: 4px;
   /* 尖角 */
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);

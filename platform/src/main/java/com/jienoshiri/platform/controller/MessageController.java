@@ -8,6 +8,7 @@ import com.jienoshiri.platform.mapper.MessageMapper;
 import com.jienoshiri.platform.mapper.NotificationMapper;
 import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
