@@ -121,6 +121,8 @@ import { onShow } from '@dcloudio/uni-app';
 const postList = ref([]);
 const myLocation = ref({ lat: null, lng: null });
 const keyword = ref('');
+const isLoadingPosts = ref(false);
+let fetchSeq = 0;
 
 onShow(() => {
   uni.getLocation({
@@ -134,16 +136,19 @@ onShow(() => {
 });
 
 const fetchPosts = () => {
-  let url = 'http://localhost:8080/post/list';
-  const params = [];
-  if (myLocation.value.lat) {
-    params.push(`lat=${myLocation.value.lat}`);
-    params.push(`lng=${myLocation.value.lng}`);
+  if (isLoadingPosts.value) return;
+  isLoadingPosts.value = true;
+  const currentSeq = ++fetchSeq;
+
+  const query = [];
+  if (myLocation.value.lat && myLocation.value.lng) {
+    query.push(`lat=${encodeURIComponent(myLocation.value.lat)}`);
+    query.push(`lng=${encodeURIComponent(myLocation.value.lng)}`);
   }
-  if (keyword.value) {
-    params.push(`keyword=${keyword.value}`);
+  if (keyword.value.trim()) {
+    query.push(`keyword=${encodeURIComponent(keyword.value.trim())}`);
   }
-  if (params.length > 0) url += '?' + params.join('&');
+  const url = `http://localhost:8080/post/list${query.length ? `?${query.join('&')}` : ''}`;
 
   const token = uni.getStorageSync('token');
   const header = {};
@@ -154,14 +159,23 @@ const fetchPosts = () => {
     method: 'GET',
     header: header,
     success: (res) => {
+      if (currentSeq !== fetchSeq) return;
       if (res.statusCode === 200) {
         postList.value = res.data.map(p => ({
           ...p,
           isLiked: p.isLiked || false,
           isTranslated: false,
           displayTitle: p.title,
-          displayContent: p.content
+          displayContent: p.content,
+          mediaList: parseMediaUrls(p.mediaUrls),
+          isLiking: false,
+          isTranslating: false
         }));
+      }
+    },
+    complete: () => {
+      if (currentSeq === fetchSeq) {
+        isLoadingPosts.value = false;
       }
     }
   });
@@ -172,38 +186,36 @@ const formatNumber = (num) => {
   return num;
 };
 
-const getCoverMedia = (item) => {
-  if (item.mediaUrls && item.mediaUrls !== '[]') {
-    try {
-      const urls = JSON.parse(item.mediaUrls);
-      return urls[0];
-    } catch (e) { return '/static/logo.png'; }
+const parseMediaUrls = (mediaUrls) => {
+  if (!mediaUrls || mediaUrls === '[]') return [];
+  try {
+    const urls = JSON.parse(mediaUrls);
+    return Array.isArray(urls) ? urls : [];
+  } catch (e) {
+    return [];
   }
-  return '/static/logo.png';
 };
 
+const getCoverMedia = (item) => item.mediaList[0] || '/static/logo.png';
+
 const getThumbnail = (item) => {
-  if (item.mediaUrls && item.mediaUrls !== '[]') {
-    try {
-      const urls = JSON.parse(item.mediaUrls);
-      const img = urls.find(url => {
-        const u = url.toLowerCase();
-        return u.endsWith('.jpg') || u.endsWith('.png') || u.endsWith('.jpeg') || u.endsWith('.webp');
-      });
-      return img || '';
-    } catch (e) { return ''; }
-  }
-  return '';
+  const img = item.mediaList.find(url => {
+    const u = url.toLowerCase();
+    return u.endsWith('.jpg') || u.endsWith('.png') || u.endsWith('.jpeg') || u.endsWith('.webp');
+  });
+  return img || '';
 };
 
 const handleTranslate = (item) => {
+  if (item.isTranslating) return;
   if (item.isTranslated) {
     item.displayTitle = item.title;
     item.displayContent = item.content;
     item.isTranslated = false;
   } else {
+    item.isTranslating = true;
     uni.showLoading({ title: '翻译中...' });
-    const hasJapanese = /[ぁ-んァ-ン]/.test(item.content);
+    const hasJapanese = /[ぁ-んァ-ン一-龯]/.test(item.content || item.title);
     const targetLang = hasJapanese ? 'zh' : 'jp';
     const separator = "\n\n|||\n\n";
     const fullText = `${item.title}${separator}${item.content}`;
@@ -225,7 +237,10 @@ const handleTranslate = (item) => {
           item.isTranslated = true;
         }
       },
-      fail: () => { uni.hideLoading(); }
+      fail: () => { uni.hideLoading(); },
+      complete: () => {
+        item.isTranslating = false;
+      }
     });
   }
 };
@@ -235,6 +250,8 @@ const doSearch = () => { fetchPosts(); };
 const handleLike = (item) => {
   const token = uni.getStorageSync('token');
   if (!token) { return uni.showToast({ title: '请先登录', icon: 'none' }); }
+  if (item.isLiking) return;
+  item.isLiking = true;
   uni.request({
     url: `http://localhost:8080/post/like?postId=${item.id}`,
     method: 'POST',
@@ -242,15 +259,22 @@ const handleLike = (item) => {
     success: (res) => {
       if (res.statusCode === 200) {
         if (res.data === '点赞成功') {
-          item.likeCount++;
+          item.likeCount = Number(item.likeCount || 0) + 1;
           item.isLiked = true;
         } else {
-          item.likeCount--;
+          item.likeCount = Math.max(0, Number(item.likeCount || 0) - 1);
           item.isLiked = false;
         }
       }
+    },
+    complete: () => {
+      item.isLiking = false;
     }
   });
+};
+
+const loadMore = () => {
+  // 当前后端接口未提供分页，这里避免触底时报错，后续可替换为分页请求
 };
 
 const goToDetail = (item) => {
