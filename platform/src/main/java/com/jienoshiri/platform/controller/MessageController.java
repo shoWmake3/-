@@ -30,7 +30,7 @@ public class MessageController {
     @Autowired
     private UserMapper userMapper;
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     // --- 通知模块 ---
 
@@ -89,7 +89,7 @@ public class MessageController {
 
     // 辅助方法：从 Token 获取用户ID
     private Long getUserIdByToken(String token) {
-        String username = jwtUtil.getUsername(token);
+        String username = tokenResolver.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
         return user.getId();
     }

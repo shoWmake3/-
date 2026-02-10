@@ -9,7 +9,7 @@ import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.mapper.WikiMapper;
 import com.jienoshiri.platform.mapper.SysConfigMapper; // 👈 追加
 import com.jienoshiri.platform.service.PostService;   // 👈 追加
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +28,7 @@ public class AdminController {
     @Autowired
     private UserMapper userMapper;
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     @Autowired
     private SysConfigMapper sysConfigMapper; // 👈 設定用Mapper
@@ -38,10 +38,25 @@ public class AdminController {
 
     // --- 权限校验辅助方法 ---
     private void checkAdmin(String token) {
+        SysUser user = getOperator(token);
+        if (!"admin".equals(user.getRole()) && !"super_admin".equals(user.getRole())) {
+            throw new RuntimeException("无权访问：需要管理员权限");
+        }
+    }
+
+    private SysUser getOperator(String token) {
         String username = jwtUtil.getUsername(token);
         SysUser user = userMapper.selectOne(new QueryWrapper<SysUser>().eq("username", username));
-        if (user == null || !"admin".equals(user.getRole())) {
-            throw new RuntimeException("无权访问：需要管理员权限");
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        return user;
+    }
+
+    private void checkSuperAdmin(String token) {
+        SysUser user = getOperator(token);
+        if (!"super_admin".equals(user.getRole())) {
+            throw new RuntimeException("无权访问：需要超级管理员权限");
         }
     }
 
@@ -50,7 +65,8 @@ public class AdminController {
     public List<Post> getPendingPosts(@RequestHeader("Authorization") String token) {
         checkAdmin(token);
         return postMapper.selectList(new QueryWrapper<Post>()
-                .eq("status", 0) // 0=待审核
+                .in("status", 0, 2, 4) // 待审核 + 驳回 + 违规下架
+                .orderByDesc("update_time")
                 .orderByDesc("create_time"));
     }
 
@@ -136,7 +152,7 @@ public class AdminController {
         return "操作成功";
     }
 
-    // 7. 封号并删帖
+    // 7. 封号并下架违规帖
     @PostMapping("/ban")
     public String banUserAndDelPost(@RequestHeader("Authorization") String token,
                                     @RequestParam Long postId,
@@ -153,8 +169,23 @@ public class AdminController {
             userMapper.updateById(user);
         }
 
+        post.setStatus(4); // 违规下架
+        post.setRejectReason(reason);
+        postMapper.updateById(post);
+        return "操作成功：已下架帖子并封号";
+    }
+
+    // 8. 硬删除帖子（仅超级管理员）
+    @PostMapping("/post/hard-delete")
+    public String hardDeletePost(@RequestHeader("Authorization") String token,
+                                 @RequestParam Long postId) {
+        checkSuperAdmin(token);
+
+        Post post = postMapper.selectById(postId);
+        if (post == null) return "帖子不存在";
+
         postMapper.deleteById(postId);
-        return "操作成功：已删帖并封号";
+        return "操作成功：已硬删除帖子";
     }
 
     // ----------- Dashboard 数据接口 -----------
@@ -187,7 +218,13 @@ public class AdminController {
     @GetMapping("/config/list")
     public List<com.jienoshiri.platform.entity.SysConfig> getConfigList(@RequestHeader("Authorization") String token) {
         checkAdmin(token);
-        return sysConfigMapper.selectList(null);
+        List<com.jienoshiri.platform.entity.SysConfig> configList = sysConfigMapper.selectList(null);
+        for (com.jienoshiri.platform.entity.SysConfig config : configList) {
+            if ("weight_wiki".equals(config.getParamKey())) {
+                config.setDescription("已转Wiki帖子(status=3)加权");
+            }
+        }
+        return configList;
     }
 
     @PostMapping("/config/update")
