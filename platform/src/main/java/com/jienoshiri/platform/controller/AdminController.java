@@ -9,7 +9,7 @@ import com.jienoshiri.platform.mapper.UserMapper;
 import com.jienoshiri.platform.mapper.WikiMapper;
 import com.jienoshiri.platform.mapper.SysConfigMapper; // 👈 追加
 import com.jienoshiri.platform.service.PostService;   // 👈 追加
-import com.jienoshiri.platform.utils.JwtUtil;
+import com.jienoshiri.platform.utils.TokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +28,7 @@ public class AdminController {
     @Autowired
     private UserMapper userMapper;
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenResolver tokenResolver;
 
     @Autowired
     private SysConfigMapper sysConfigMapper; // 👈 設定用Mapper
