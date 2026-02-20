@@ -352,19 +352,13 @@ const scrollToBottom = () => {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: #115fbe;
   /* 禁用灰 */
   display: flex;
   align-items: center;
   justify-content: center;
   margin-left: 10px;
   transition: all 0.3s;
-}
-
-.send-btn.active {
-  background: var(--text-main);
-  /* 激活黑/深蓝 */
-  transform: scale(1.05);
 }
 
 .send-icon {

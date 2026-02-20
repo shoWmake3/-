@@ -483,8 +483,8 @@ const formatTime = (t) => t ? t.replace('T', ' ').substring(0, 16) : '';
     transform: translateX(-50%);
     right: auto;
     
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255,255,255,0.8);
+    background: rgba(231, 240, 241, 0.9);
+    border: 1px solid rgba(154, 200, 211, 0.8);
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     z-index: 1000;
   }

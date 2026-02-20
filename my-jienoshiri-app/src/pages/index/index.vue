@@ -341,22 +341,22 @@ const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
 .mobile-search {
   flex: 1; /* 占据剩余空间 */
   height: 44px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(221, 228, 233, 0.7);
   border-radius: 50px;
   display: flex; 
   align-items: center;
   padding: 0 16px;
-  border: 1px solid rgba(255,255,255,0.8);
+  border: 1px solid rgba(177, 218, 197, 0.8);
   box-shadow: 0 2px 10px rgba(0,0,0,0.03);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   margin-right: 12px; /* 与右边按钮保持间距 */
 }
 
 .mobile-search:focus-within {
-  background: #fff;
+  background: rgba(221, 228, 233, 0.7);
   box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
   transform: translateY(-1px) scale(1.01);
-  border-color: #fff;
+  border-color: rgba(177, 218, 197, 0.8);
 }
 
 .search-icon { opacity: 0.5; margin-right: 8px; }
@@ -585,19 +585,19 @@ const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
   .search-box:not(.mobile-search) {
     max-width: 600px; 
     height: 52px; 
-    background: #fff; 
+    background: #92bacc; 
     box-shadow: 0 8px 30px rgba(0,0,0,0.04);
     border-radius: 50px;
     padding: 0 16px;
-    border: 1px solid rgba(255,255,255,0.8);
+    border: 1px solid rgba(179, 223, 210, 0.8);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   
   .search-box:not(.mobile-search):focus-within {
-    background: #fff;
+    background: #7f96b1;
     box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
     transform: translateY(-1px) scale(1.01);
-    border-color: #fff;
+    border-color: #a4cfc5;
   }
 
   /* Hero 区域：极光文字 */
