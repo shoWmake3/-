@@ -15,11 +15,18 @@
         </div>
       </div>
       
-      <!-- 移动端：搜索框靠左 -->
-      <div class="search-box mobile-search">
+      <!-- 移动端：搜索框 -->
+      <div class="search-box mobile-search" @click="focusSearchInput">
         <text class="search-icon">🔍</text>
-        <input class="search-input" v-model="keyword" placeholder="搜百科、找攻略、看世界..." confirm-type="search"
+        <input ref="searchInputRef" class="search-input" v-model="keyword" placeholder="搜百科、找攻略、看世界..." confirm-type="search"
           placeholder-style="color: #64748b; font-weight: 300;" @confirm="doSearch" />
+      </div>
+      
+      <!-- 搜索按钮 -->
+      <div class="search-btn-wrapper" @click="doSearch">
+        <div class="search-btn-icon">
+          <text class="search-btn-text">🔍</text>
+        </div>
       </div>
       
       <!-- 移动端：发布按钮靠右 -->
@@ -122,7 +129,14 @@ const postList = ref([]);
 const myLocation = ref({ lat: null, lng: null });
 const keyword = ref('');
 const isLoadingPosts = ref(false);
+const searchInputRef = ref(null);
 let fetchSeq = 0;
+
+const focusSearchInput = () => {
+  if (searchInputRef.value) {
+    searchInputRef.value.focus();
+  }
+};
 
 onShow(() => {
   uni.getLocation({
@@ -385,6 +399,37 @@ const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
 
 .search-icon { opacity: 0.5; margin-right: 8px; }
 .search-input { flex: 1; font-size: 14px; color: #1e293b; }
+
+/* 搜索按钮样式 */
+.search-btn-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.search-btn-icon {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.search-btn-wrapper:active .search-btn-icon {
+  transform: scale(0.92);
+  background: #fff;
+}
+
+.search-btn-text {
+  font-size: 18px;
+}
 
 /* 发布按钮 & 呼吸光环 */
 .add-btn-wrapper { 
@@ -710,6 +755,17 @@ const isVideo = (url) => url && (url.endsWith('.mp4') || url.endsWith('.mov'));
   .plus-icon {
     font-size: 30px;
     transform: translateY(-1px);
+  }
+  
+  /* PC端搜索按钮样式调整 */
+  .search-btn-wrapper {
+    width: 52px;
+    height: 52px;
+    margin-right: 20px;
+  }
+  
+  .search-btn-text {
+    font-size: 22px;
   }
 }
 </style>
