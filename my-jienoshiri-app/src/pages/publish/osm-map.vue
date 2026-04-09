@@ -150,24 +150,69 @@ export default {
       // 动画平移到点击位置
       this.map.panTo(latlng);
 
-      const url = `http://localhost:8080/post/reverse-geo?lat=${lat}&lon=${lng}`;
-      
-      fetch(url, { method: 'GET' })
-        .then(res => res.text())
-        .then(addressName => {
-          ownerInstance.callMethod('updateLocation', {
-            address: addressName,
-            lat: lat,
-            lng: lng
-          });
-        })
-        .catch(err => {
-          ownerInstance.callMethod('updateLocation', {
-            address: '未知地点 (' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ')',
-            lat: lat,
-            lng: lng
-          });
-        });
+      // 先显示坐标作为临时地址
+      ownerInstance.callMethod('updateLocation', {
+        address: '正在获取地址...',
+        lat: lat,
+        lng: lng
+      });
+
+      // 使用多个逆解析服务（带降级处理）
+      this.reverseGeocode(lat, lng, ownerInstance);
+    },
+    
+    async reverseGeocode(lat, lng, ownerInstance) {
+      // 备用服务列表
+      const services = [
+        // 主服务：Nominatim (OpenStreetMap 官方)
+        () => this.fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-CN,zh;q=0.9,en;q=0.8`, {
+          headers: { 'User-Agent': 'MyJienoshiriApp/1.0' }
+        }, 5000),
+        
+        // 备用服务 1：使用更简单的格式
+        () => this.fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
+          headers: { 'User-Agent': 'MyJienoshiriApp/1.0' }
+        }, 5000),
+        
+        // 备用服务 2：使用 OpenCage (需要 API key，这里仅作示例，实际使用时可替换)
+        // 如果没有 API key，可以注释掉或使用其他免费服务
+      ];
+
+      for (let i = 0; i < services.length; i++) {
+        try {
+          const data = await services[i]();
+          if (data && data.display_name) {
+            ownerInstance.callMethod('updateLocation', {
+              address: data.display_name,
+              lat: lat,
+              lng: lng
+            });
+            return; // 成功则退出
+          }
+        } catch (err) {
+          console.log(`[OSM] 逆解析服务 ${i+1} 失败:`, err.message);
+          // 继续尝试下一个服务
+        }
+      }
+
+      // 所有服务都失败，降级显示坐标
+      ownerInstance.callMethod('updateLocation', {
+        address: '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4),
+        lat: lat,
+        lng: lng
+      });
+    },
+    
+    fetchWithTimeout(url, options, timeoutMs) {
+      return Promise.race([
+        fetch(url, options).then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), timeoutMs)
+        )
+      ]);
     }
   }
 }
