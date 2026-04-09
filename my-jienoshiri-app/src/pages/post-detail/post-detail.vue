@@ -14,7 +14,7 @@
         <view class="media-wrapper">
           <swiper class="media-swiper" :indicator-dots="mediaList.length > 1" 
             indicator-active-color="#ffffff" indicator-color="rgba(255,255,255,0.5)" 
-            :autoplay="false" circular>
+            :autoplay="false" circular @change="onSwiperChange">
             <swiper-item v-for="(url, index) in mediaList" :key="index">
               <view class="media-item">
                 <video v-if="isVideo(url)" :src="url" class="full-media" controls object-fit="contain"></video>
@@ -23,6 +23,10 @@
             </swiper-item>
           </swiper>
           <view class="mobile-curve-mask"></view>
+          <!-- 图片计数指示器 -->
+          <view class="image-counter" v-if="mediaList.length > 1">
+            <text>{{ currentImageIndex + 1 }} / {{ mediaList.length }}</text>
+          </view>
         </view>
 
         <view class="content-body">
@@ -150,6 +154,7 @@ const commentList = ref([]);
 const newComment = ref('');
 const rating = ref(0);
 const isRatingOpen = ref(false); // 星星开关
+const currentImageIndex = ref(0); // 当前图片索引
 
 onLoad((options) => {
   const data = uni.getStorageSync('currentPost');
@@ -267,6 +272,10 @@ const sendComment = () => {
   });
 };
 const formatTime = (t) => t ? t.replace('T', ' ').substring(0, 16) : '';
+// Swiper 切换事件处理
+const onSwiperChange = (e) => {
+  currentImageIndex.value = e.detail.current;
+};
 </script>
 
 <style>
@@ -306,6 +315,15 @@ const formatTime = (t) => t ? t.replace('T', ' ').substring(0, 16) : '';
 .mobile-curve-mask {
   position: absolute; bottom: -1px; left: 0; width: 100%; height: 24px;
   background: #fff; border-radius: 24px 24px 0 0; z-index: 10;
+}
+
+/* 图片计数指示器 */
+.image-counter {
+  position: absolute; bottom: 30px; right: 20px; z-index: 20;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+  color: #fff; font-size: 12px; font-weight: 600;
+  padding: 6px 12px; border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* 内容区 */
@@ -456,6 +474,14 @@ const formatTime = (t) => t ? t.replace('T', ' ').substring(0, 16) : '';
 
   /* 去掉手机端的弧形遮罩 */
   .mobile-curve-mask { display: none; }
+  
+  /* PC 端图片计数器样式调整 */
+  .image-counter {
+    bottom: 20px;
+    right: 20px;
+    font-size: 13px;
+    padding: 8px 14px;
+  }
   
   /* 媒体区 */
   .media-wrapper { height: 450px; }
