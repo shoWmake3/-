@@ -99,7 +99,7 @@ public class PostService {
         post.setViewCount(0);
         post.setLikeCount(0);
         post.setCommentCount(0);
-        post.setStatus(0); // 默认待审核
+        post.setStatus(1); // 默认直接发布（状态 1=正常）
         postMapper.insert(post);
 
         // 发帖奖励声望
