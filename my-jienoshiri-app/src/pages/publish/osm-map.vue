@@ -112,7 +112,7 @@ export default {
         this.handleMapClick(e.latlng, ownerInstance);
       });
       
-      // 获取并显示用户当前位置
+      // 获取并显示用户当前位置，并自动点击
       if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition((pos) => {
               const { latitude, longitude } = pos.coords;
@@ -130,6 +130,9 @@ export default {
                 .addTo(this.map)
                 .bindPopup('📍 我的当前位置')
                 .openPopup();
+              
+              // 自动触发当前位置的点击事件
+              this.handleMapClick({ lat: latitude, lng: longitude }, ownerInstance);
           }, (err) => {
               console.log('无法获取当前位置:', err);
           });
