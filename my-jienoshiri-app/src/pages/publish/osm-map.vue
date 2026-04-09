@@ -112,10 +112,26 @@ export default {
         this.handleMapClick(e.latlng, ownerInstance);
       });
       
+      // 获取并显示用户当前位置
       if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition((pos) => {
               const { latitude, longitude } = pos.coords;
               this.map.setView([latitude, longitude], 15);
+              
+              // 添加当前位置标记（蓝色圆点样式）
+              const currentLocationIcon = L.divIcon({
+                  className: 'current-location-marker',
+                  html: '<div style="background-color: #4285f4; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10]
+              });
+              
+              L.marker([latitude, longitude], { icon: currentLocationIcon })
+                .addTo(this.map)
+                .bindPopup('📍 我的当前位置')
+                .openPopup();
+          }, (err) => {
+              console.log('无法获取当前位置:', err);
           });
       }
     },
@@ -246,5 +262,16 @@ export default {
   /* 复写动画，防止 transform 冲突 */
   @keyframes slideUpPC { from { transform: translate(-50%, 100px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
   .glass-panel { animation-name: slideUpPC; }
+}
+
+/* 当前位置标记样式 */
+.current-location-marker {
+  background: transparent;
+}
+.current-location-marker div {
+  transition: all 0.3s ease;
+}
+.current-location-marker div:hover {
+  transform: scale(1.2);
 }
 </style>
