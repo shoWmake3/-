@@ -98,7 +98,7 @@ const identities = [
 ];
 
 const needProof = computed(() => {
-  return form.value.identityType === 'student' || form.value.identityType === 'agent';
+  return form.value.identityType === 'student' || form.value.identityType === 'agent'|| form.value.identityType === 'worker';
 });
 
 const selectIdentity = (val) => {
