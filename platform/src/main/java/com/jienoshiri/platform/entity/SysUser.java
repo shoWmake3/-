@@ -16,9 +16,9 @@ public class SysUser {
     private String username;
     private String password;
     private String nickname;
-    private String email;         // 新增
-    private String phone;         // 新增
-    private String avatar;        // 新增
+    private String email;
+    private String phone;
+    private String avatar;
     private String identityType;
     private String identityProof; // 证件照URL
     private Integer auditStatus;  // 0:无, 1:待审核, 2:通过, 3:驳回
@@ -28,7 +28,6 @@ public class SysUser {
     private LocalDateTime createTime;
     private LocalDateTime updateTime; // 新增
     private String rejectReason;   // 审核拒绝理由
-
     private String role;
 
     // 在 SysUser 实体类中建议添加一个获取权重的逻辑
