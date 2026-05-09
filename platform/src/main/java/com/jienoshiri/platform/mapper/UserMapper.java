@@ -6,6 +6,5 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface UserMapper extends BaseMapper<SysUser> {
-    // 没错，里面什么都不用写！
-    // MyBatis-Plus 自动帮你实现了 增删改查 方法
+    // MyBatis-Plus 自动实现了 增删改查 方法
 }

@@ -6,5 +6,5 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface PostMapper extends BaseMapper<Post> {
-    // MyBatis-Plus 已经帮我们写好了增删改查
+    // MyBatis-Plus 写好了增删改查
 }

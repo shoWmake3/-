@@ -24,18 +24,6 @@
 
     <scroll-view scroll-y class="scroll-body" show-scrollbar="true">
       <view class="content-wrapper">
-        
-        <view class="category-section" v-if="!keyword">
-          <text class="section-label">探索分类</text>
-          <view class="cat-grid">
-            <view class="cat-card" v-for="(cat, index) in categories" :key="index" 
-              @click="filterByCat(cat.name)" :class="'cat-color-' + index">
-              <text class="cat-emoji">{{ cat.emoji }}</text>
-              <text class="cat-name">{{ cat.name }}</text>
-              <view class="cat-bg-icon">{{ cat.emoji }}</view>
-            </view>
-          </view>
-        </view>
 
         <view class="wiki-list">
           <view class="list-header">
