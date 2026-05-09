@@ -42,7 +42,6 @@
                 </view>
               </view>
             </view>
-            <button class="follow-btn">关注</button>
           </view>
 
           <view class="main-text-area">
