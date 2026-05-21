@@ -28,21 +28,17 @@ public class RecommendationService {
         // 1. 获取全站所有的点赞数据
         // (注意：实际生产环境数据量大时不能这么查，要用离线计算。但毕设数据量小，全查内存计算是最快的MVP方案)
         List<PostLike> allLikes = postLikeMapper.selectList(null);
-
         // 2. 数据转换：Map<用户ID, Set<他点赞过的帖子ID>>
         Map<Long, Set<Long>> userLikeMap = new HashMap<>();
         for (PostLike like : allLikes) {
             userLikeMap.computeIfAbsent(like.getUserId(), k -> new HashSet<>()).add(like.getPostId());
         }
-
         // 如果当前用户没点过赞，或者是新用户，直接返回空(降级策略)
         if (!userLikeMap.containsKey(targetUserId)) {
             return Collections.emptyList();
         }
-
         Set<Long> targetUserLikes = userLikeMap.get(targetUserId);
         Map<Long, Double> userSimilarityMap = new HashMap<>();
-
         // 3. 计算用户相似度 (Jaccard Similarity)
         // 相似度 = (交集) / (并集)
         for (Long otherUserId : userLikeMap.keySet()) {

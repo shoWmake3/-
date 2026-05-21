@@ -65,7 +65,7 @@ public class AuthService {
         }
         user.setReputation(initReputation);
 
-        // 4. ⭐ 核心修正：身份审核逻辑 (int -> boolean)
+        // 4. 身份审核逻辑 (boolean)
         if ("student".equals(type) || "agent".equals(type)) {
             if (dto.getIdentityProof() != null && !dto.getIdentityProof().isEmpty()) {
                 user.setIdentityProof(dto.getIdentityProof());

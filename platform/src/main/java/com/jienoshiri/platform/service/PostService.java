@@ -107,7 +107,7 @@ public class PostService {
     }
 
     /**
-     * ⭐ 辅助方法：使用 OpenStreetMap 获取经纬度 (免费/无Key)
+     * 使用 OpenStreetMap 获取经纬度 (免费/无Key)
      */
     private void fillGeoInfo(Post post) {
         try {
@@ -147,7 +147,6 @@ public class PostService {
      * 获取帖子列表 (首页信息流)
      */
     public List<PostVo> getPostList(BigDecimal userLat, BigDecimal userLng, String keyword, Long currentUserId, String identityType) {
-
         // 1. 查所有帖子
         QueryWrapper<Post> query = new QueryWrapper<>();
         // 查状态为 1(正常) 与 3(已转Wiki) 的帖子，配合 weight_wiki 的加权逻辑
@@ -157,11 +156,9 @@ public class PostService {
         }
         query.orderByDesc("create_time");
         List<Post> posts = postMapper.selectList(query);
-
         // 2. 准备推荐数据
         List<Long> userCfIds = new ArrayList<>();
         List<Long> contentBasedIds = new ArrayList<>();
-
         if (currentUserId != null) {
             try {
                 userCfIds = recommendationService.recommendPostIds(currentUserId, 10);
@@ -171,14 +168,11 @@ public class PostService {
                 contentBasedIds = recommendationService.recommendByContent(identityType);
             } catch (Exception e) {}
         }
-
         List<PostVo> result = new ArrayList<>();
-
         // 3. 混合打分
         for (Post post : posts) {
             PostVo vo = new PostVo();
             BeanUtils.copyProperties(post, vo);
-
             SysUser author = userMapper.selectById(post.getUserId());
             if (author != null) {
                 vo.setAuthorName(author.getNickname());
@@ -186,37 +180,31 @@ public class PostService {
                 vo.setAuthorIdentity(author.getIdentityType());
                 vo.setAuthorReputation(author.getReputation());
             }
-
             // 计算 LBS 距离
             if (userLat != null && post.getLatitude() != null) {
                 double km = LocationUtils.getDistance(userLat, userLng, post.getLatitude(), post.getLongitude());
                 vo.setDistance(km);
             }
-
             // 填充点赞状态
             if (currentUserId != null) {
                 Long count = postLikeMapper.selectCount(new QueryWrapper<PostLike>()
                         .eq("user_id", currentUserId).eq("post_id", post.getId()));
                 vo.setIsLiked(count > 0);
             }
-
             // Redis 浏览量合并
             String viewKey = "post:view:" + post.getId();
             Integer redisViews = (Integer) redisTemplate.opsForValue().get(viewKey);
             if (redisViews != null) {
                 vo.setViewCount(vo.getViewCount() + redisViews);
             }
-
-            // ⭐⭐ 混合加权核心逻辑 (修改为动态读取) ⭐⭐
+            //混合加权核心逻辑 (动态读取)
             double score = 0;
-
             // 权重 1: UserCF
             double wUserCF = getWeight("weight_user_cf", 1000.0);
             if (userCfIds.contains(post.getId())) {
                 score += wUserCF;
                 vo.setTitle("【猜你喜欢】" + vo.getTitle());
             }
-
             // 权重 2: Content-Based
             double wContent = getWeight("weight_content", 500.0);
             if (contentBasedIds.contains(post.getId())) {
@@ -225,32 +213,26 @@ public class PostService {
                     vo.setTitle("【精选】" + vo.getTitle());
                 }
             }
-
             // 权重 3: 作者声望
             double wRep = getWeight("weight_reputation", 0.5);
             if (author != null && author.getReputation() != null) {
                 double repBonus = author.getReputation() * wRep;
                 score += Math.min(Math.max(repBonus, -500), 200);
             }
-
             // 权重 4: LBS
             double wLbs = getWeight("weight_lbs", 300.0);
             if (vo.getDistance() != null && vo.getDistance() < 10) {
                 score += wLbs;
             }
-
             // 权重 5: Wiki
             double wWiki = getWeight("weight_wiki", 200.0);
             if (post.getStatus() == 3) {
                 score += wWiki;
             }
-
             score += (double) post.getId() / 1000000.0;
-
             vo.setScore(score);
             result.add(vo);
         }
-
         // 4. 排序
         result.sort((o1, o2) -> Double.compare(o2.getScore(), o1.getScore()));
         return result;
@@ -378,7 +360,7 @@ public class PostService {
     }
 
     /**
-     * ⭐ 新增：逆地理编码 (坐标 -> 地址名称)
+     * 逆地理编码 (坐标 -> 地址名称)
      * 供前端地图选点使用，解决 CORS 和 User-Agent 问题
      */
     public String reverseGeocode(BigDecimal lat, BigDecimal lon) {
